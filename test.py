@@ -34,7 +34,7 @@ origins = origins.to_crs("EPSG:4326")
 destinations = railway_station.copy()
 
 
-travel_times = r5py.TravelTimeMatrix(
+detailed_itineraries = r5py.DetailedItineraries(
     transport_network,
     origins=origins,
     destinations=destinations,
@@ -42,20 +42,33 @@ travel_times = r5py.TravelTimeMatrix(
     transport_modes=[
         r5py.TransportMode.TRANSIT,
         r5py.TransportMode.WALK,
+        #r5py.TransportMode.CAR,
+        #r5py.TransportMode.BICYCLE,
     ],
     snap_to_network=True,
 )
 
-travel_times = population_grid.merge(travel_times, left_on="id", right_on="from_id")
+# Display the detailed itinerary data
+print("Detailed itineraries data (first 5 rows):")
+print(detailed_itineraries.head())
 
-# Display the data
-print("Travel times data (first 5 rows):")
-print(travel_times.head())
+print(f"\nColumns available in DetailedItineraries:")
+print(list(detailed_itineraries.columns))
 
-print(f"\nTravel time statistics:")
-print(f"Min travel time: {travel_times['travel_time'].min():.1f} minutes")
-print(f"Max travel time: {travel_times['travel_time'].max():.1f} minutes")
-print(f"Mean travel time: {travel_times['travel_time'].mean():.1f} minutes")
+# Analyze transport modes
+print(f"\nTransport mode analysis:")
+if 'transport_mode' in detailed_itineraries.columns:
+    mode_counts = detailed_itineraries['transport_mode'].value_counts()
+    print("Transport modes used:")
+    for mode, count in mode_counts.items():
+        print(f"  {mode}: {count} trips")
+
+# Travel time statistics
+if 'total_time' in detailed_itineraries.columns:
+    print(f"\nTravel time statistics:")
+    print(f"Min travel time: {detailed_itineraries['total_time'].min():.1f} minutes")
+    print(f"Max travel time: {detailed_itineraries['total_time'].max():.1f} minutes")
+    print(f"Mean travel time: {detailed_itineraries['total_time'].mean():.1f} minutes")
 
 # Create and save visualizations
 print("\nCreating visualizations...")
@@ -64,7 +77,11 @@ print("\nCreating visualizations...")
 overview_map.save("overview_map.html")
 print("✓ Saved overview_map.html")
 
-# Travel times map
-travel_time_map = travel_times.explore("travel_time", cmap="Greens")
-travel_time_map.save("travel_times_map.html")
-print("✓ Saved travel_times_map.html")
+# Merge with population grid for mapping (using total_time if available)
+if 'total_time' in detailed_itineraries.columns:
+    travel_data = population_grid.merge(detailed_itineraries, left_on="id", right_on="from_id")
+    travel_time_map = travel_data.explore("total_time", cmap="Greens")
+    travel_time_map.save("detailed_itineraries_map.html")
+    print("✓ Saved detailed_itineraries_map.html")
+else:
+    print("Note: total_time column not found - check DetailedItineraries output structure")
