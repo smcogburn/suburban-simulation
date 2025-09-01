@@ -20,13 +20,3 @@ the pipeline:
 - test each scenario
 - analyze
 
-
-one OSM extract + a GTFS zip file -> pass to r5py -> it builds transport network
-from there, can compute door to door travel time
-tho instead of using TravelTimeMatrix, use DetailedItineraries 
-this returns transport mode, wait times, path geometry, and more
-use this for our data
-+ can turn it into some visualization?
-
-use OSMmx (or something else?) to pull BUILDINGS and POIs for origin/desitnation pairs and trip sampling
-for scenarios - for 1 modify the GTFS file being passed in, change headways,for 2, all bikeable roads in network (or.. all roads?) add a 20% bonus in choice algorithm to using them to represent you feeling better about uisng it
