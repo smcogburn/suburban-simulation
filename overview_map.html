@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html>
+<head>
+    
+    <meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.9.3/dist/leaflet.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.2/dist/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://netdna.bootstrapcdn.com/bootstrap/3.0.0/css/bootstrap-glyphicons.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.2.0/css/all.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/Leaflet.awesome-markers/2.0.2/leaflet.awesome-markers.css"/>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/python-visualization/folium/folium/templates/leaflet.awesome.rotate.min.css"/>
+    
+            <meta name="viewport" content="width=device-width,
+                initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+            <style>
+                #map_3f5c8fafb0275afa4c14d8328d6e67c5 {
+                    position: relative;
+                    width: 100.0%;
+                    height: 100.0%;
+                    left: 0.0%;
+                    top: 0.0%;
+                }
+                .leaflet-container { font-size: 1rem; }
+            </style>
+
+            <style>html, body {
+                width: 100%;
+                height: 100%;
+                margin: 0;
+                padding: 0;
+            }
+            </style>
+
+            <style>#map {
+                position:absolute;
+                top:0;
+                bottom:0;
+                right:0;
+                left:0;
+                }
+            </style>
+
+            <script>
+                L_NO_TOUCH = false;
+                L_DISABLE_3D = false;
+            </script>
+
+        
+    
+                    <style>
+                        .foliumtooltip {
+                            
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.5/d3.min.js"></script>
+    
+                    <style>
+                        .foliumtooltip {
+                            
+                        }
+                       .foliumtooltip table{
+                            margin: auto;
+                        }
+                        .foliumtooltip tr{
+                            text-align: left;
+                        }
+                        .foliumtooltip th{
+                            padding: 2px; padding-right: 8px;
+                        }
+                    </style>
+            
+</head>
+<body>
+    
+    
+            <div class="folium-map" id="map_3f5c8fafb0275afa4c14d8328d6e67c5" ></div>
+        
+</body>
+<script>
+    
+    
+            var map_3f5c8fafb0275afa4c14d8328d6e67c5 = L.map(
+                "map_3f5c8fafb0275afa4c14d8328d6e67c5",
+                {
+                    center: [60.16536527774946, 24.932467057927006],
+                    crs: L.CRS.EPSG3857,
+                    ...{
+  "zoom": 10,
+  "zoomControl": true,
+  "preferCanvas": false,
+}
+
+                }
+            );
+            L.control.scale().addTo(map_3f5c8fafb0275afa4c14d8328d6e67c5);
+
+            
+
+        
+    
+            var tile_layer_0bee726fb2527e79676c28bd13cd9ec0 = L.tileLayer(
+                "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+                {
+  "minZoom": 0,
+  "maxZoom": 19,
+  "maxNativeZoom": 19,
+  "noWrap": false,
+  "attribution": "\u0026copy; \u003ca href=\"https://www.openstreetmap.org/copyright\"\u003eOpenStreetMap\u003c/a\u003e contributors",
+  "subdomains": "abc",
+  "detectRetina": false,
+  "tms": false,
+  "opacity": 1,
+}
+
+            );
+        
+    
+            tile_layer_0bee726fb2527e79676c28bd13cd9ec0.addTo(map_3f5c8fafb0275afa4c14d8328d6e67c5);
+        
+    
+            map_3f5c8fafb0275afa4c14d8328d6e67c5.fitBounds(
+                [[60.154132207744546, 24.90544814560493], [60.176598347754364, 24.959485970249084]],
+                {}
+            );
+        
+    
+        function geo_json_7513848ab69ffa3be579112cf2f3ffd2_styler(feature) {
+            switch(feature.id) {
+                case "0": 
+                    return {"color": "#fdd0bc", "fillColor": "#fdd0bc", "fillOpacity": 0.5, "weight": 2};
+                case "1": case "58": 
+                    return {"color": "#fedecf", "fillColor": "#fedecf", "fillOpacity": 0.5, "weight": 2};
+                case "2": 
+                    return {"color": "#fcad90", "fillColor": "#fcad90", "fillOpacity": 0.5, "weight": 2};
+                case "3": 
+                    return {"color": "#dc2924", "fillColor": "#dc2924", "fillOpacity": 0.5, "weight": 2};
+                case "4": case "79": case "88": 
+                    return {"color": "#fff4ee", "fillColor": "#fff4ee", "fillOpacity": 0.5, "weight": 2};
+                case "5": case "82": 
+                    return {"color": "#fee5d9", "fillColor": "#fee5d9", "fillOpacity": 0.5, "weight": 2};
+                case "6": case "78": 
+                    return {"color": "#fc8666", "fillColor": "#fc8666", "fillOpacity": 0.5, "weight": 2};
+                case "7": 
+                    return {"color": "#fb7656", "fillColor": "#fb7656", "fillOpacity": 0.5, "weight": 2};
+                case "8": 
+                    return {"color": "#ea362a", "fillColor": "#ea362a", "fillOpacity": 0.5, "weight": 2};
+                case "9": 
+                    return {"color": "#fedbcc", "fillColor": "#fedbcc", "fillOpacity": 0.5, "weight": 2};
+                case "10": case "68": 
+                    return {"color": "#fdd4c2", "fillColor": "#fdd4c2", "fillOpacity": 0.5, "weight": 2};
+                case "11": 
+                    return {"color": "#fdc7b2", "fillColor": "#fdc7b2", "fillOpacity": 0.5, "weight": 2};
+                case "12": 
+                    return {"color": "#fff3ed", "fillColor": "#fff3ed", "fillOpacity": 0.5, "weight": 2};
+                case "13": 
+                    return {"color": "#fcc2aa", "fillColor": "#fcc2aa", "fillOpacity": 0.5, "weight": 2};
+                case "14": case "40": 
+                    return {"color": "#fca98c", "fillColor": "#fca98c", "fillOpacity": 0.5, "weight": 2};
+                case "15": 
+                    return {"color": "#d92523", "fillColor": "#d92523", "fillOpacity": 0.5, "weight": 2};
+                case "16": 
+                    return {"color": "#d82422", "fillColor": "#d82422", "fillOpacity": 0.5, "weight": 2};
+                case "17": 
+                    return {"color": "#fc9777", "fillColor": "#fc9777", "fillOpacity": 0.5, "weight": 2};
+                case "18": 
+                    return {"color": "#79040f", "fillColor": "#79040f", "fillOpacity": 0.5, "weight": 2};
+                case "19": case "55": 
+                    return {"color": "#ac1117", "fillColor": "#ac1117", "fillOpacity": 0.5, "weight": 2};
+                case "20": 
+                    return {"color": "#fc9070", "fillColor": "#fc9070", "fillOpacity": 0.5, "weight": 2};
+                case "21": 
+                    return {"color": "#fc8767", "fillColor": "#fc8767", "fillOpacity": 0.5, "weight": 2};
+                case "22": case "61": 
+                    return {"color": "#fff2ec", "fillColor": "#fff2ec", "fillOpacity": 0.5, "weight": 2};
+                case "23": 
+                    return {"color": "#fcb398", "fillColor": "#fcb398", "fillOpacity": 0.5, "weight": 2};
+                case "24": case "42": 
+                    return {"color": "#fcb79c", "fillColor": "#fcb79c", "fillOpacity": 0.5, "weight": 2};
+                case "25": 
+                    return {"color": "#fb7353", "fillColor": "#fb7353", "fillOpacity": 0.5, "weight": 2};
+                case "26": 
+                    return {"color": "#e53228", "fillColor": "#e53228", "fillOpacity": 0.5, "weight": 2};
+                case "27": 
+                    return {"color": "#b91419", "fillColor": "#b91419", "fillOpacity": 0.5, "weight": 2};
+                case "28": 
+                    return {"color": "#cf1c1f", "fillColor": "#cf1c1f", "fillOpacity": 0.5, "weight": 2};
+                case "29": case "38": 
+                    return {"color": "#e32f27", "fillColor": "#e32f27", "fillOpacity": 0.5, "weight": 2};
+                case "30": 
+                    return {"color": "#dd2a25", "fillColor": "#dd2a25", "fillOpacity": 0.5, "weight": 2};
+                case "31": 
+                    return {"color": "#f5533b", "fillColor": "#f5533b", "fillOpacity": 0.5, "weight": 2};
+                case "32": 
+                    return {"color": "#b81419", "fillColor": "#b81419", "fillOpacity": 0.5, "weight": 2};
+                case "33": 
+                    return {"color": "#f6583e", "fillColor": "#f6583e", "fillOpacity": 0.5, "weight": 2};
+                case "34": 
+                    return {"color": "#fc9474", "fillColor": "#fc9474", "fillOpacity": 0.5, "weight": 2};
+                case "35": 
+                    return {"color": "#fc8e6e", "fillColor": "#fc8e6e", "fillOpacity": 0.5, "weight": 2};
+                case "36": 
+                    return {"color": "#fca486", "fillColor": "#fca486", "fillOpacity": 0.5, "weight": 2};
+                case "37": 
+                    return {"color": "#fee7dc", "fillColor": "#fee7dc", "fillOpacity": 0.5, "weight": 2};
+                case "39": 
+                    return {"color": "#f03f2e", "fillColor": "#f03f2e", "fillOpacity": 0.5, "weight": 2};
+                case "41": case "90": 
+                    return {"color": "#fee2d5", "fillColor": "#fee2d5", "fillOpacity": 0.5, "weight": 2};
+                case "43": 
+                    return {"color": "#fee9df", "fillColor": "#fee9df", "fillOpacity": 0.5, "weight": 2};
+                case "44": 
+                    return {"color": "#fedccd", "fillColor": "#fedccd", "fillOpacity": 0.5, "weight": 2};
+                case "45": case "87": 
+                    return {"color": "#fb6d4d", "fillColor": "#fb6d4d", "fillOpacity": 0.5, "weight": 2};
+                case "46": 
+                    return {"color": "#fb694a", "fillColor": "#fb694a", "fillOpacity": 0.5, "weight": 2};
+                case "47": 
+                    return {"color": "#ec382b", "fillColor": "#ec382b", "fillOpacity": 0.5, "weight": 2};
+                case "48": 
+                    return {"color": "#bf151b", "fillColor": "#bf151b", "fillOpacity": 0.5, "weight": 2};
+                case "49": 
+                    return {"color": "#f75b40", "fillColor": "#f75b40", "fillOpacity": 0.5, "weight": 2};
+                case "50": 
+                    return {"color": "#fee5d8", "fillColor": "#fee5d8", "fillOpacity": 0.5, "weight": 2};
+                case "51": 
+                    return {"color": "#fff2eb", "fillColor": "#fff2eb", "fillOpacity": 0.5, "weight": 2};
+                case "52": 
+                    return {"color": "#ffebe2", "fillColor": "#ffebe2", "fillOpacity": 0.5, "weight": 2};
+                case "53": 
+                    return {"color": "#fee7db", "fillColor": "#fee7db", "fillOpacity": 0.5, "weight": 2};
+                case "54": 
+                    return {"color": "#fb6b4b", "fillColor": "#fb6b4b", "fillOpacity": 0.5, "weight": 2};
+                case "56": 
+                    return {"color": "#7e0610", "fillColor": "#7e0610", "fillOpacity": 0.5, "weight": 2};
+                case "57": 
+                    return {"color": "#fdc6b0", "fillColor": "#fdc6b0", "fillOpacity": 0.5, "weight": 2};
+                case "59": 
+                    return {"color": "#fff4ef", "fillColor": "#fff4ef", "fillOpacity": 0.5, "weight": 2};
+                case "60": 
+                    return {"color": "#fee4d8", "fillColor": "#fee4d8", "fillOpacity": 0.5, "weight": 2};
+                case "62": case "63": case "80": 
+                    return {"color": "#fff5f0", "fillColor": "#fff5f0", "fillOpacity": 0.5, "weight": 2};
+                case "64": 
+                    return {"color": "#fc9b7c", "fillColor": "#fc9b7c", "fillOpacity": 0.5, "weight": 2};
+                case "65": 
+                    return {"color": "#fc997a", "fillColor": "#fc997a", "fillOpacity": 0.5, "weight": 2};
+                case "66": 
+                    return {"color": "#820711", "fillColor": "#820711", "fillOpacity": 0.5, "weight": 2};
+                case "67": 
+                    return {"color": "#f24734", "fillColor": "#f24734", "fillOpacity": 0.5, "weight": 2};
+                case "69": 
+                    return {"color": "#fff0e9", "fillColor": "#fff0e9", "fillOpacity": 0.5, "weight": 2};
+                case "70": 
+                    return {"color": "#fee1d3", "fillColor": "#fee1d3", "fillOpacity": 0.5, "weight": 2};
+                case "71": 
+                    return {"color": "#ffece4", "fillColor": "#ffece4", "fillOpacity": 0.5, "weight": 2};
+                case "72": 
+                    return {"color": "#fcc1a8", "fillColor": "#fcc1a8", "fillOpacity": 0.5, "weight": 2};
+                case "73": 
+                    return {"color": "#fc9373", "fillColor": "#fc9373", "fillOpacity": 0.5, "weight": 2};
+                case "74": 
+                    return {"color": "#c8171c", "fillColor": "#c8171c", "fillOpacity": 0.5, "weight": 2};
+                case "75": 
+                    return {"color": "#67000d", "fillColor": "#67000d", "fillOpacity": 0.5, "weight": 2};
+                case "76": 
+                    return {"color": "#fcb296", "fillColor": "#fcb296", "fillOpacity": 0.5, "weight": 2};
+                case "77": 
+                    return {"color": "#fca082", "fillColor": "#fca082", "fillOpacity": 0.5, "weight": 2};
+                case "81": 
+                    return {"color": "#fedfd0", "fillColor": "#fedfd0", "fillOpacity": 0.5, "weight": 2};
+                case "83": 
+                    return {"color": "#fcbca2", "fillColor": "#fcbca2", "fillOpacity": 0.5, "weight": 2};
+                case "84": 
+                    return {"color": "#fc8565", "fillColor": "#fc8565", "fillOpacity": 0.5, "weight": 2};
+                case "85": 
+                    return {"color": "#b61319", "fillColor": "#b61319", "fillOpacity": 0.5, "weight": 2};
+                case "86": 
+                    return {"color": "#b21218", "fillColor": "#b21218", "fillOpacity": 0.5, "weight": 2};
+                case "89": 
+                    return {"color": "#ffefe8", "fillColor": "#ffefe8", "fillOpacity": 0.5, "weight": 2};
+                default:
+                    return {"color": "#fff0e8", "fillColor": "#fff0e8", "fillOpacity": 0.5, "weight": 2};
+            }
+        }
+        function geo_json_7513848ab69ffa3be579112cf2f3ffd2_highlighter(feature) {
+            switch(feature.id) {
+                default:
+                    return {"fillOpacity": 0.75};
+            }
+        }
+        function geo_json_7513848ab69ffa3be579112cf2f3ffd2_pointToLayer(feature, latlng) {
+            var opts = {
+  "stroke": true,
+  "color": "#3388ff",
+  "weight": 3,
+  "opacity": 1.0,
+  "lineCap": "round",
+  "lineJoin": "round",
+  "dashArray": null,
+  "dashOffset": null,
+  "fill": true,
+  "fillColor": "#3388ff",
+  "fillOpacity": 0.2,
+  "fillRule": "evenodd",
+  "bubblingMouseEvents": true,
+  "radius": 2,
+};
+            
+            let style = geo_json_7513848ab69ffa3be579112cf2f3ffd2_styler(feature)
+            Object.assign(opts, style)
+            
+            return new L.CircleMarker(latlng, opts)
+        }
+
+        function geo_json_7513848ab69ffa3be579112cf2f3ffd2_onEachFeature(feature, layer) {
+
+            layer.on({
+                mouseout: function(e) {
+                    if(typeof e.target.setStyle === "function"){
+                            geo_json_7513848ab69ffa3be579112cf2f3ffd2.resetStyle(e.target);
+                    }
+                },
+                mouseover: function(e) {
+                    if(typeof e.target.setStyle === "function"){
+                        const highlightStyle = geo_json_7513848ab69ffa3be579112cf2f3ffd2_highlighter(e.target.feature)
+                        e.target.setStyle(highlightStyle);
+                    }
+                },
+            });
+        };
+        var geo_json_7513848ab69ffa3be579112cf2f3ffd2 = L.geoJson(null, {
+                onEachFeature: geo_json_7513848ab69ffa3be579112cf2f3ffd2_onEachFeature,
+            
+                style: geo_json_7513848ab69ffa3be579112cf2f3ffd2_styler,
+                pointToLayer: geo_json_7513848ab69ffa3be579112cf2f3ffd2_pointToLayer,
+            ...{
+}
+        });
+
+        function geo_json_7513848ab69ffa3be579112cf2f3ffd2_add (data) {
+            geo_json_7513848ab69ffa3be579112cf2f3ffd2
+                .addData(data);
+        }
+            geo_json_7513848ab69ffa3be579112cf2f3ffd2_add({"bbox": [24.90544814560493, 60.154132207744546, 24.959485970249084, 60.176598347754364], "features": [{"bbox": [24.90544814560493, 60.16086376676568, 24.909956702936157, 60.163110843578714], "geometry": {"coordinates": [[[24.905454590581666, 60.16086376676568], [24.90544814560493, 60.163107708012646], [24.909950564858626, 60.163110843578714], [24.909956702936157, 60.16086690204865], [24.905454590581666, 60.16086376676568]]], "type": "Polygon"}, "id": "0", "properties": {"__folium_color": "#fdd0bc", "id": 0, "population": 389}, "type": "Feature"}, {"bbox": [24.905454590581666, 60.1586199145246, 24.90996283979359, 60.16086690204865], "geometry": {"coordinates": [[[24.90546103427731, 60.1586199145246], [24.905454590581666, 60.16086376676568], [24.909956702936157, 60.16086690204865], [24.90996283979359, 60.15862304952451], [24.90546103427731, 60.1586199145246]]], "type": "Polygon"}, "id": "1", "properties": {"__folium_color": "#fedecf", "id": 1, "population": 296}, "type": "Feature"}, {"bbox": [24.90546103427731, 60.1563760615176, 24.909968975676733, 60.15862304952451], "geometry": {"coordinates": [[[24.90546747694994, 60.1563760615176], [24.90546103427731, 60.1586199145246], [24.90996283979359, 60.15862304952451], [24.909968975676733, 60.15637919623452], [24.90546747694994, 60.1563760615176]]], "type": "Polygon"}, "id": "2", "properties": {"__folium_color": "#fcad90", "id": 2, "population": 636}, "type": "Feature"}, {"bbox": [24.90546747694994, 60.154132207744546, 24.909975110585798, 60.15637919623452], "geometry": {"coordinates": [[[24.905473918599796, 60.154132207744546], [24.90546747694994, 60.1563760615176], [24.909968975676733, 60.15637919623452], [24.909975110585798, 60.1541353421785], [24.905473918599796, 60.154132207744546]]], "type": "Polygon"}, "id": "3", "properties": {"__folium_color": "#dc2924", "id": 3, "population": 1476}, "type": "Feature"}, {"bbox": [24.909938286270247, 60.16535469457101, 24.914447153216148, 60.16760152794955], "geometry": {"coordinates": [[[24.90994442605191, 60.16535469457101], [24.909938286270247, 60.16759854479736], [24.91444132041912, 60.16760152794955], [24.914447153216148, 60.16535767745387], [24.90994442605191, 60.16535469457101]]], "type": "Polygon"}, "id": "4", "properties": {"__folium_color": "#fff4ee", "id": 4, "population": 23}, "type": "Feature"}, {"bbox": [24.90994442605191, 60.163110843578714, 24.914452985086978, 60.16535767745387], "geometry": {"coordinates": [[[24.909950564858626, 60.163110843578714], [24.90994442605191, 60.16535469457101], [24.914447153216148, 60.16535767745387], [24.914452985086978, 60.163113826192266], [24.909950564858626, 60.163110843578714]]], "type": "Polygon"}, "id": "5", "properties": {"__folium_color": "#fee5d9", "id": 5, "population": 213}, "type": "Feature"}, {"bbox": [24.909950564858626, 60.16086690204865, 24.91445881626508, 60.163113826192266], "geometry": {"coordinates": [[[24.909956702936157, 60.16086690204865], [24.909950564858626, 60.163110843578714], [24.914452985086978, 60.163113826192266], [24.91445881626508, 60.16086988439292], [24.909956702936157, 60.16086690204865]]], "type": "Polygon"}, "id": "6", "properties": {"__folium_color": "#fc8666", "id": 6, "population": 881}, "type": "Feature"}, {"bbox": [24.909956702936157, 60.15862304952451, 24.91446464628409, 60.16086988439292], "geometry": {"coordinates": [[[24.90996283979359, 60.15862304952451], [24.909956702936157, 60.16086690204865], [24.91445881626508, 60.16086988439292], [24.91446464628409, 60.158626031599546], [24.90996283979359, 60.15862304952451]]], "type": "Polygon"}, "id": "7", "properties": {"__folium_color": "#fb7656", "id": 7, "population": 991}, "type": "Feature"}, {"bbox": [24.90996283979359, 60.15637919623452, 24.91447047537752, 60.158626031599546], "geometry": {"coordinates": [[[24.909968975676733, 60.15637919623452], [24.90996283979359, 60.15862304952451], [24.91446464628409, 60.158626031599546], [24.91447047537752, 60.156382178040346], [24.909968975676733, 60.15637919623452]]], "type": "Polygon"}, "id": "8", "properties": {"__folium_color": "#ea362a", "id": 8, "population": 1371}, "type": "Feature"}, {"bbox": [24.909968975676733, 60.1541353421785, 24.91447630354558, 60.156382178040346], "geometry": {"coordinates": [[[24.909975110585798, 60.1541353421785], [24.909968975676733, 60.15637919623452], [24.91447047537752, 60.156382178040346], [24.91447630354558, 60.15413832371517], [24.909975110585798, 60.1541353421785]]], "type": "Polygon"}, "id": "9", "properties": {"__folium_color": "#fedbcc", "id": 9, "population": 305}, "type": "Feature"}, {"bbox": [24.91441797996484, 60.17433307484203, 24.918927772791125, 60.17657975346936], "geometry": {"coordinates": [[[24.914423816468748, 60.17433307484203], [24.91441797996484, 60.17657692227486], [24.91892224346715, 60.17657975346936], [24.918927772791125, 60.17433590578084], [24.914423816468748, 60.17433307484203]]], "type": "Polygon"}, "id": "10", "properties": {"__folium_color": "#fdd4c2", "id": 10, "population": 358}, "type": "Feature"}, {"bbox": [24.914423816468748, 60.17208922664359, 24.91893330123686, 60.17433590578084], "geometry": {"coordinates": [[[24.914429652045627, 60.17208922664359], [24.914423816468748, 60.17433307484203], [24.918927772791125, 60.17433590578084], [24.91893330123686, 60.172092057326786], [24.914429652045627, 60.17208922664359]]], "type": "Polygon"}, "id": "11", "properties": {"__folium_color": "#fdc7b2", "id": 11, "population": 451}, "type": "Feature"}, {"bbox": [24.914429652045627, 60.169845377679465, 24.918938828804546, 60.172092057326786], "geometry": {"coordinates": [[[24.91443548669568, 60.169845377679465], [24.914429652045627, 60.17208922664359], [24.91893330123686, 60.172092057326786], [24.918938828804546, 60.16984820810705], [24.91443548669568, 60.169845377679465]]], "type": "Polygon"}, "id": "12", "properties": {"__folium_color": "#fff3ed", "id": 12, "population": 36}, "type": "Feature"}, {"bbox": [24.914447153216148, 60.163113826192266, 24.918955406241313, 60.16536050737035], "geometry": {"coordinates": [[[24.914452985086978, 60.163113826192266], [24.914447153216148, 60.16535767745387], [24.918949881306578, 60.16536050737035], [24.918955406241313, 60.163116655853244], [24.914452985086978, 60.163113826192266]]], "type": "Polygon"}, "id": "13", "properties": {"__folium_color": "#fcc2aa", "id": 13, "population": 492}, "type": "Feature"}, {"bbox": [24.914452985086978, 60.16086988439292, 24.918960930519777, 60.163116655853244], "geometry": {"coordinates": [[[24.91445881626508, 60.16086988439292], [24.914452985086978, 60.163113826192266], [24.918955406241313, 60.163116655853244], [24.918960930519777, 60.16087271379844], [24.91445881626508, 60.16086988439292]]], "type": "Polygon"}, "id": "14", "properties": {"__folium_color": "#fca98c", "id": 14, "population": 655}, "type": "Feature"}, {"bbox": [24.91445881626508, 60.158626031599546, 24.918966453700158, 60.16087271379844], "geometry": {"coordinates": [[[24.91446464628409, 60.158626031599546], [24.91445881626508, 60.16086988439292], [24.918960930519777, 60.16087271379844], [24.918966453700158, 60.15862886074962], [24.91446464628409, 60.158626031599546]]], "type": "Polygon"}, "id": "15", "properties": {"__folium_color": "#d92523", "id": 15, "population": 1498}, "type": "Feature"}, {"bbox": [24.91446464628409, 60.156382178040346, 24.91897197600367, 60.15862886074962], "geometry": {"coordinates": [[[24.91447047537752, 60.156382178040346], [24.91446464628409, 60.158626031599546], [24.918966453700158, 60.15862886074962], [24.91897197600367, 60.156385006935025], [24.91447047537752, 60.156382178040346]]], "type": "Polygon"}, "id": "16", "properties": {"__folium_color": "#d82422", "id": 16, "population": 1505}, "type": "Feature"}, {"bbox": [24.91447047537752, 60.15413832371517, 24.918977497430514, 60.156385006935025], "geometry": {"coordinates": [[[24.91447630354558, 60.15413832371517], [24.91447047537752, 60.156382178040346], [24.91897197600367, 60.156385006935025], [24.918977497430514, 60.1541411523545], [24.91447630354558, 60.15413832371517]]], "type": "Polygon"}, "id": "17", "properties": {"__folium_color": "#fc9777", "id": 17, "population": 771}, "type": "Feature"}, {"bbox": [24.91892224346715, 60.17433590578084, 24.923431881742555, 60.17658243171601], "geometry": {"coordinates": [[[24.918927772791125, 60.17433590578084], [24.91892224346715, 60.17657975346936], [24.923426659609063, 60.17658243171601], [24.923431881742555, 60.17433858378562], [24.918927772791125, 60.17433590578084]]], "type": "Polygon"}, "id": "18", "properties": {"__folium_color": "#79040f", "id": 18, "population": 2060}, "type": "Feature"}, {"bbox": [24.918927772791125, 60.172092057326786, 24.9234371030466, 60.17433858378562], "geometry": {"coordinates": [[[24.91893330123686, 60.172092057326786], [24.918927772791125, 60.17433590578084], [24.923431881742555, 60.17433858378562], [24.9234371030466, 60.17209473508973], [24.91893330123686, 60.172092057326786]]], "type": "Polygon"}, "id": "19", "properties": {"__folium_color": "#ac1117", "id": 19, "population": 1815}, "type": "Feature"}, {"bbox": [24.91893330123686, 60.16984820810705, 24.92344232352138, 60.17209473508973], "geometry": {"coordinates": [[[24.918938828804546, 60.16984820810705], [24.91893330123686, 60.172092057326786], [24.9234371030466, 60.17209473508973], [24.92344232352138, 60.169850885628186], [24.918938828804546, 60.16984820810705]]], "type": "Polygon"}, "id": "20", "properties": {"__folium_color": "#fc9070", "id": 20, "population": 817}, "type": "Feature"}, {"bbox": [24.918938828804546, 60.16760435812158, 24.923447543167082, 60.169850885628186], "geometry": {"coordinates": [[[24.91894435549439, 60.16760435812158], [24.918938828804546, 60.16984820810705], [24.92344232352138, 60.169850885628186], [24.923447543167082, 60.16760703540096], [24.91894435549439, 60.16760435812158]]], "type": "Polygon"}, "id": "21", "properties": {"__folium_color": "#fc8767", "id": 21, "population": 877}, "type": "Feature"}, {"bbox": [24.91894435549439, 60.16536050737035, 24.923452761983892, 60.16760703540096], "geometry": {"coordinates": [[[24.918949881306578, 60.16536050737035], [24.91894435549439, 60.16760435812158], [24.923447543167082, 60.16760703540096], [24.923452761983892, 60.165363184407994], [24.918949881306578, 60.16536050737035]]], "type": "Polygon"}, "id": "22", "properties": {"__folium_color": "#fff2ec", "id": 22, "population": 41}, "type": "Feature"}, {"bbox": [24.918949881306578, 60.163116655853244, 24.923457979971996, 60.165363184407994], "geometry": {"coordinates": [[[24.918955406241313, 60.163116655853244], [24.918949881306578, 60.16536050737035], [24.923452761983892, 60.165363184407994], [24.923457979971996, 60.16311933264922], [24.918955406241313, 60.163116655853244]]], "type": "Polygon"}, "id": "23", "properties": {"__folium_color": "#fcb398", "id": 23, "population": 588}, "type": "Feature"}, {"bbox": [24.918955406241313, 60.16087271379844, 24.923463197340286, 60.16311933264922], "geometry": {"coordinates": [[[24.918960930519777, 60.16087271379844], [24.918955406241313, 60.163116655853244], [24.923457979971996, 60.16311933264922], [24.923463197340286, 60.160875390352714], [24.918960930519777, 60.16087271379844]]], "type": "Polygon"}, "id": "24", "properties": {"__folium_color": "#fcb79c", "id": 24, "population": 571}, "type": "Feature"}, {"bbox": [24.918960930519777, 60.15862886074962, 24.923468413671504, 60.160875390352714], "geometry": {"coordinates": [[[24.918966453700158, 60.15862886074962], [24.918960930519777, 60.16087271379844], [24.923463197340286, 60.160875390352714], [24.923468413671504, 60.15863153706227], [24.918966453700158, 60.15862886074962]]], "type": "Polygon"}, "id": "25", "properties": {"__folium_color": "#fb7353", "id": 25, "population": 1009}, "type": "Feature"}, {"bbox": [24.918966453700158, 60.156385006935025, 24.923473629174566, 60.15863153706227], "geometry": {"coordinates": [[[24.91897197600367, 60.156385006935025], [24.918966453700158, 60.15862886074962], [24.923468413671504, 60.15863153706227], [24.923473629174566, 60.15638768300609], [24.91897197600367, 60.156385006935025]]], "type": "Polygon"}, "id": "26", "properties": {"__folium_color": "#e53228", "id": 26, "population": 1410}, "type": "Feature"}, {"bbox": [24.923426659609063, 60.17433858378562, 24.927935839772633, 60.176584956834255], "geometry": {"coordinates": [[[24.923431881742555, 60.17433858378562], [24.923426659609063, 60.17658243171601], [24.92793092481946, 60.176584956834255], [24.927935839772633, 60.17434110867584], [24.923431881742555, 60.17433858378562]]], "type": "Polygon"}, "id": "27", "properties": {"__folium_color": "#b91419", "id": 27, "population": 1721}, "type": "Feature"}, {"bbox": [24.923431881742555, 60.17209473508973, 24.927940753945144, 60.17434110867584], "geometry": {"coordinates": [[[24.9234371030466, 60.17209473508973], [24.923431881742555, 60.17433858378562], [24.927935839772633, 60.17434110867584], [24.927940753945144, 60.172097259751936], [24.9234371030466, 60.17209473508973]]], "type": "Polygon"}, "id": "28", "properties": {"__folium_color": "#cf1c1f", "id": 28, "population": 1578}, "type": "Feature"}, {"bbox": [24.9234371030466, 60.169850885628186, 24.927945667337177, 60.172097259751936], "geometry": {"coordinates": [[[24.92344232352138, 60.169850885628186], [24.9234371030466, 60.17209473508973], [24.927940753945144, 60.172097259751936], [24.927945667337177, 60.16985341006243], [24.92344232352138, 60.169850885628186]]], "type": "Polygon"}, "id": "29", "properties": {"__folium_color": "#e32f27", "id": 29, "population": 1422}, "type": "Feature"}, {"bbox": [24.92344232352138, 60.16760703540096, 24.9279505799489, 60.16985341006243], "geometry": {"coordinates": [[[24.923447543167082, 60.16760703540096], [24.92344232352138, 60.169850885628186], [24.927945667337177, 60.16985341006243], [24.9279505799489, 60.16760955960724], [24.923447543167082, 60.16760703540096]]], "type": "Polygon"}, "id": "30", "properties": {"__folium_color": "#dd2a25", "id": 30, "population": 1466}, "type": "Feature"}, {"bbox": [24.923447543167082, 60.165363184407994, 24.927955491780487, 60.16760955960724], "geometry": {"coordinates": [[[24.923452761983892, 60.165363184407994], [24.923447543167082, 60.16760703540096], [24.9279505799489, 60.16760955960724], [24.927955491780487, 60.165365708386396], [24.923452761983892, 60.165363184407994]]], "type": "Polygon"}, "id": "31", "properties": {"__folium_color": "#f5533b", "id": 31, "population": 1203}, "type": "Feature"}, {"bbox": [24.923452761983892, 60.16311933264922, 24.927960402832117, 60.165365708386396], "geometry": {"coordinates": [[[24.923457979971996, 60.16311933264922], [24.923452761983892, 60.165363184407994], [24.927955491780487, 60.165365708386396], [24.927960402832117, 60.16312185639973], [24.923457979971996, 60.16311933264922]]], "type": "Polygon"}, "id": "32", "properties": {"__folium_color": "#b81419", "id": 32, "population": 1731}, "type": "Feature"}, {"bbox": [24.923457979971996, 60.160875390352714, 24.927965313300394, 60.16312185639973], "geometry": {"coordinates": [[[24.923463197340286, 60.160875390352714], [24.923457979971996, 60.16311933264922], [24.927960402832117, 60.16312185639973], [24.927965313300394, 60.160877913875375], [24.923463197340286, 60.160875390352714]]], "type": "Polygon"}, "id": "33", "properties": {"__folium_color": "#f6583e", "id": 33, "population": 1176}, "type": "Feature"}, {"bbox": [24.92793092481946, 60.17434110867584, 24.93243979858342, 60.17658732891686], "geometry": {"coordinates": [[[24.927935839772633, 60.17434110867584], [24.92793092481946, 60.176584956834255], [24.93243519081074, 60.17658732891686], [24.93243979858342, 60.17434348054422], [24.927935839772633, 60.17434110867584]]], "type": "Polygon"}, "id": "34", "properties": {"__folium_color": "#fc9474", "id": 34, "population": 789}, "type": "Feature"}, {"bbox": [24.927935839772633, 60.172097259751936, 24.93244440562423, 60.17434348054422], "geometry": {"coordinates": [[[24.927940753945144, 60.172097259751936], [24.927935839772633, 60.17434110867584], [24.93243979858342, 60.17434348054422], [24.93244440562423, 60.17209963140615], [24.927940753945144, 60.172097259751936]]], "type": "Polygon"}, "id": "35", "properties": {"__folium_color": "#fc8e6e", "id": 35, "population": 831}, "type": "Feature"}, {"bbox": [24.927940753945144, 60.16985341006243, 24.932449011933343, 60.17209963140615], "geometry": {"coordinates": [[[24.927945667337177, 60.16985341006243], [24.927940753945144, 60.172097259751936], [24.93244440562423, 60.17209963140615], [24.932449011933343, 60.169855781502484], [24.927945667337177, 60.16985341006243]]], "type": "Polygon"}, "id": "36", "properties": {"__folium_color": "#fca486", "id": 36, "population": 691}, "type": "Feature"}, {"bbox": [24.927945667337177, 60.16760955960724, 24.93245361751091, 60.169855781502484], "geometry": {"coordinates": [[[24.9279505799489, 60.16760955960724], [24.927945667337177, 60.16985341006243], [24.932449011933343, 60.169855781502484], [24.93245361751091, 60.167611930833175], [24.9279505799489, 60.16760955960724]]], "type": "Polygon"}, "id": "37", "properties": {"__folium_color": "#fee7dc", "id": 37, "population": 182}, "type": "Feature"}, {"bbox": [24.9279505799489, 60.165365708386396, 24.932458222357102, 60.167611930833175], "geometry": {"coordinates": [[[24.927955491780487, 60.165365708386396], [24.9279505799489, 60.16760955960724], [24.93245361751091, 60.167611930833175], [24.932458222357102, 60.165368079398235], [24.927955491780487, 60.165365708386396]]], "type": "Polygon"}, "id": "38", "properties": {"__folium_color": "#e32f27", "id": 38, "population": 1422}, "type": "Feature"}, {"bbox": [24.927955491780487, 60.16312185639973, 24.93246282647208, 60.165368079398235], "geometry": {"coordinates": [[[24.927960402832117, 60.16312185639973], [24.927955491780487, 60.165365708386396], [24.932458222357102, 60.165368079398235], [24.93246282647208, 60.1631242271975], [24.927960402832117, 60.16312185639973]]], "type": "Polygon"}, "id": "39", "properties": {"__folium_color": "#f03f2e", "id": 39, "population": 1317}, "type": "Feature"}, {"bbox": [24.927960402832117, 60.160877913875375, 24.932467430040166, 60.1631242271975], "geometry": {"coordinates": [[[24.927965313300394, 60.160877913875375], [24.927960402832117, 60.16312185639973], [24.93246282647208, 60.1631242271975], [24.932467430040166, 60.16088028445911], [24.927965313300394, 60.160877913875375]]], "type": "Polygon"}, "id": "40", "properties": {"__folium_color": "#fca98c", "id": 40, "population": 660}, "type": "Feature"}, {"bbox": [24.927965313300394, 60.15863406035712, 24.93247203269318, 60.16088028445911], "geometry": {"coordinates": [[[24.927970222792595, 60.15863406035712], [24.927965313300394, 60.160877913875375], [24.932467430040166, 60.16088028445911], [24.93247203269318, 60.158636430726844], [24.927970222792595, 60.15863406035712]]], "type": "Polygon"}, "id": "41", "properties": {"__folium_color": "#fee2d5", "id": 41, "population": 252}, "type": "Feature"}, {"bbox": [24.927970222792595, 60.156390206073134, 24.932476634615472, 60.158636430726844], "geometry": {"coordinates": [[[24.92797513150536, 60.156390206073134], [24.927970222792595, 60.15863406035712], [24.93247203269318, 60.158636430726844], [24.932476634615472, 60.156392576228875], [24.92797513150536, 60.156390206073134]]], "type": "Polygon"}, "id": "42", "properties": {"__folium_color": "#fcb79c", "id": 42, "population": 571}, "type": "Feature"}, {"bbox": [24.92797513150536, 60.154146351023286, 24.932481235807206, 60.156392576228875], "geometry": {"coordinates": [[[24.927980039438864, 60.154146351023286], [24.92797513150536, 60.156390206073134], [24.932476634615472, 60.156392576228875], [24.932481235807206, 60.15414872096507], [24.927980039438864, 60.154146351023286]]], "type": "Polygon"}, "id": "43", "properties": {"__folium_color": "#fee9df", "id": 43, "population": 163}, "type": "Feature"}, {"bbox": [24.932449011933343, 60.167611930833175, 24.936956807523885, 60.16985800002047], "geometry": {"coordinates": [[[24.93245361751091, 60.167611930833175], [24.932449011933343, 60.169855781502484], [24.936952508990977, 60.16985800002047], [24.936956807523885, 60.16761414915087], [24.93245361751091, 60.167611930833175]]], "type": "Polygon"}, "id": "44", "properties": {"__folium_color": "#fedccd", "id": 44, "population": 303}, "type": "Feature"}, {"bbox": [24.93245361751091, 60.165368079398235, 24.936961105374174, 60.16761414915087], "geometry": {"coordinates": [[[24.932458222357102, 60.165368079398235], [24.93245361751091, 60.167611930833175], [24.936956807523885, 60.16761414915087], [24.936961105374174, 60.16537029751562], [24.932458222357102, 60.165368079398235]]], "type": "Polygon"}, "id": "45", "properties": {"__folium_color": "#fb6d4d", "id": 45, "population": 1050}, "type": "Feature"}, {"bbox": [24.932458222357102, 60.1631242271975, 24.936965402541993, 60.16537029751562], "geometry": {"coordinates": [[[24.93246282647208, 60.1631242271975], [24.932458222357102, 60.165368079398235], [24.936961105374174, 60.16537029751562], [24.936965402541993, 60.163126445114614], [24.93246282647208, 60.1631242271975]]], "type": "Polygon"}, "id": "46", "properties": {"__folium_color": "#fb694a", "id": 46, "population": 1074}, "type": "Feature"}, {"bbox": [24.93246282647208, 60.16088028445911, 24.936969699199384, 60.163126445114614], "geometry": {"coordinates": [[[24.932467430040166, 60.16088028445911], [24.93246282647208, 60.1631242271975], [24.936965402541993, 60.163126445114614], [24.936969699199384, 60.16088250217597], [24.932467430040166, 60.16088028445911]]], "type": "Polygon"}, "id": "47", "properties": {"__folium_color": "#ec382b", "id": 47, "population": 1359}, "type": "Feature"}, {"bbox": [24.932467430040166, 60.158636430726844, 24.93697399500271, 60.16088250217597], "geometry": {"coordinates": [[[24.93247203269318, 60.158636430726844], [24.932467430040166, 60.16088028445911], [24.936969699199384, 60.16088250217597], [24.93697399500271, 60.15863864824351], [24.93247203269318, 60.158636430726844]]], "type": "Polygon"}, "id": "48", "properties": {"__folium_color": "#bf151b", "id": 48, "population": 1684}, "type": "Feature"}, {"bbox": [24.93247203269318, 60.156392576228875, 24.936978290124028, 60.15863864824351], "geometry": {"coordinates": [[[24.932476634615472, 60.156392576228875], [24.93247203269318, 60.158636430726844], [24.93697399500271, 60.15863864824351], [24.936978290124028, 60.15639479354537], [24.932476634615472, 60.156392576228875]]], "type": "Polygon"}, "id": "49", "properties": {"__folium_color": "#f75b40", "id": 49, "population": 1160}, "type": "Feature"}, {"bbox": [24.932476634615472, 60.15414872096507, 24.936982584563495, 60.15639479354537], "geometry": {"coordinates": [[[24.932481235807206, 60.15414872096507], [24.932476634615472, 60.156392576228875], [24.936978290124028, 60.15639479354537], [24.936982584563495, 60.15415093808141], [24.932481235807206, 60.15414872096507]]], "type": "Polygon"}, "id": "50", "properties": {"__folium_color": "#fee5d8", "id": 50, "population": 221}, "type": "Feature"}, {"bbox": [24.936939609295028, 60.17434569946295, 24.941447870102575, 60.176591614041996], "geometry": {"coordinates": [[[24.936943909876703, 60.17434569946295], [24.936939609295028, 60.176589548035956], [24.94144387670171, 60.176591614041996], [24.941447870102575, 60.17434776528239], [24.936943909876703, 60.17434569946295]]], "type": "Polygon"}, "id": "51", "properties": {"__folium_color": "#fff2eb", "id": 51, "population": 51}, "type": "Feature"}, {"bbox": [24.936952508990977, 60.16761414915087, 24.941459846500027, 60.16986006546688], "geometry": {"coordinates": [[[24.936956807523885, 60.16761414915087], [24.936952508990977, 60.16985800002047], [24.941455855001593, 60.16986006546688], [24.941459846500027, 60.16761621441077], [24.936956807523885, 60.16761414915087]]], "type": "Polygon"}, "id": "52", "properties": {"__folium_color": "#ffebe2", "id": 52, "population": 133}, "type": "Feature"}, {"bbox": [24.936956807523885, 60.16537029751562, 24.9414638373646, 60.16761621441077], "geometry": {"coordinates": [[[24.936961105374174, 60.16537029751562], [24.936956807523885, 60.16761414915087], [24.941459846500027, 60.16761621441077], [24.9414638373646, 60.16537236258904], [24.936961105374174, 60.16537029751562]]], "type": "Polygon"}, "id": "53", "properties": {"__folium_color": "#fee7db", "id": 53, "population": 189}, "type": "Feature"}, {"bbox": [24.936961105374174, 60.163126445114614, 24.94146782759546, 60.16537236258904], "geometry": {"coordinates": [[[24.936965402541993, 60.163126445114614], [24.936961105374174, 60.16537029751562], [24.9414638373646, 60.16537236258904], [24.94146782759546, 60.163128510001584], [24.936965402541993, 60.163126445114614]]], "type": "Polygon"}, "id": "54", "properties": {"__folium_color": "#fb6b4b", "id": 54, "population": 1070}, "type": "Feature"}, {"bbox": [24.936965402541993, 60.16088250217597, 24.941471817352344, 60.163128510001584], "geometry": {"coordinates": [[[24.936969699199384, 60.16088250217597], [24.936965402541993, 60.163126445114614], [24.94146782759546, 60.163128510001584], [24.941471817352344, 60.16088456687654], [24.936969699199384, 60.16088250217597]]], "type": "Polygon"}, "id": "55", "properties": {"__folium_color": "#ac1117", "id": 55, "population": 1817}, "type": "Feature"}, {"bbox": [24.936969699199384, 60.15863864824351, 24.941475806316166, 60.16088456687654], "geometry": {"coordinates": [[[24.93697399500271, 60.15863864824351], [24.936969699199384, 60.16088250217597], [24.941471817352344, 60.16088456687654], [24.941475806316166, 60.158640712757666], [24.93697399500271, 60.15863864824351]]], "type": "Polygon"}, "id": "56", "properties": {"__folium_color": "#7e0610", "id": 56, "population": 2030}, "type": "Feature"}, {"bbox": [24.93697399500271, 60.15639479354537, 24.941479794646696, 60.158640712757666], "geometry": {"coordinates": [[[24.936978290124028, 60.15639479354537], [24.93697399500271, 60.15863864824351], [24.941475806316166, 60.158640712757666], [24.941479794646696, 60.15639685787316], [24.936978290124028, 60.15639479354537]]], "type": "Polygon"}, "id": "57", "properties": {"__folium_color": "#fdc6b0", "id": 57, "population": 462}, "type": "Feature"}, {"bbox": [24.936978290124028, 60.15415093808141, 24.941483782344076, 60.15639685787316], "geometry": {"coordinates": [[[24.936982584563495, 60.15415093808141], [24.936978290124028, 60.15639479354537], [24.941479794646696, 60.15639685787316], [24.941483782344076, 60.15415300222286], [24.936982584563495, 60.15415093808141]]], "type": "Polygon"}, "id": "58", "properties": {"__folium_color": "#fedecf", "id": 58, "population": 290}, "type": "Feature"}, {"bbox": [24.94144387670171, 60.17434776528239, 24.945951830962528, 60.17659352701226], "geometry": {"coordinates": [[[24.941447870102575, 60.17434776528239], [24.94144387670171, 60.176591614041996], [24.945948144742612, 60.17659352701226], [24.945951830962528, 60.1743496780799], [24.941447870102575, 60.17434776528239]]], "type": "Polygon"}, "id": "59", "properties": {"__folium_color": "#fff4ef", "id": 59, "population": 17}, "type": "Feature"}, {"bbox": [24.941447870102575, 60.17210391575741, 24.945955516596946, 60.1743496780799], "geometry": {"coordinates": [[[24.941451862869155, 60.17210391575741], [24.941447870102575, 60.17434776528239], [24.945951830962528, 60.1743496780799], [24.945955516596946, 60.172105828382186], [24.941451862869155, 60.17210391575741]]], "type": "Polygon"}, "id": "60", "properties": {"__folium_color": "#fee4d8", "id": 60, "population": 226}, "type": "Feature"}, {"bbox": [24.941451862869155, 60.16986006546688, 24.945959201646, 60.172105828382186], "geometry": {"coordinates": [[[24.941455855001593, 60.16986006546688], [24.941451862869155, 60.17210391575741], [24.945955516596946, 60.172105828382186], [24.945959201646, 60.169861977918934], [24.941455855001593, 60.16986006546688]]], "type": "Polygon"}, "id": "61", "properties": {"__folium_color": "#fff2ec", "id": 61, "population": 45}, "type": "Feature"}, {"bbox": [24.941455855001593, 60.16761621441077, 24.945962886109825, 60.169861977918934], "geometry": {"coordinates": [[[24.941459846500027, 60.16761621441077], [24.941455855001593, 60.16986006546688], [24.945959201646, 60.169861977918934], [24.945962886109825, 60.16761812669014], [24.941459846500027, 60.16761621441077]]], "type": "Polygon"}, "id": "62", "properties": {"__folium_color": "#fff5f0", "id": 62, "population": 12}, "type": "Feature"}, {"bbox": [24.941459846500027, 60.16537236258904, 24.945966569988542, 60.16761812669014], "geometry": {"coordinates": [[[24.9414638373646, 60.16537236258904], [24.941459846500027, 60.16761621441077], [24.945962886109825, 60.16761812669014], [24.945966569988542, 60.16537427469577], [24.9414638373646, 60.16537236258904]]], "type": "Polygon"}, "id": "63", "properties": {"__folium_color": "#fff5f0", "id": 63, "population": 12}, "type": "Feature"}, {"bbox": [24.9414638373646, 60.163128510001584, 24.945970253282294, 60.16537427469577], "geometry": {"coordinates": [[[24.94146782759546, 60.163128510001584], [24.9414638373646, 60.16537236258904], [24.945966569988542, 60.16537427469577], [24.945970253282294, 60.16313042193569], [24.94146782759546, 60.163128510001584]]], "type": "Polygon"}, "id": "64", "properties": {"__folium_color": "#fc9b7c", "id": 64, "population": 749}, "type": "Feature"}, {"bbox": [24.94146782759546, 60.16088456687654, 24.94597393613853, 60.16313042193569], "geometry": {"coordinates": [[[24.941471817352344, 60.16088456687654], [24.94146782759546, 60.163128510001584], [24.945970253282294, 60.16313042193569], [24.94597393613853, 60.160886478638], [24.941471817352344, 60.16088456687654]]], "type": "Polygon"}, "id": "65", "properties": {"__folium_color": "#fc997a", "id": 65, "population": 757}, "type": "Feature"}, {"bbox": [24.941471817352344, 60.158640712757666, 24.945977618262706, 60.160886478638], "geometry": {"coordinates": [[[24.941475806316166, 60.158640712757666], [24.941471817352344, 60.16088456687654], [24.94597393613853, 60.160886478638], [24.945977618262706, 60.15864262434655], [24.941475806316166, 60.158640712757666]]], "type": "Polygon"}, "id": "66", "properties": {"__folium_color": "#820711", "id": 66, "population": 2013}, "type": "Feature"}, {"bbox": [24.941475806316166, 60.15639685787316, 24.945981299802302, 60.15864262434655], "geometry": {"coordinates": [[[24.941479794646696, 60.15639685787316], [24.941475806316166, 60.158640712757666], [24.945977618262706, 60.15864262434655], [24.945981299802302, 60.15639876928948], [24.941479794646696, 60.15639685787316]]], "type": "Polygon"}, "id": "67", "properties": {"__folium_color": "#f24734", "id": 67, "population": 1263}, "type": "Feature"}, {"bbox": [24.941479794646696, 60.15415300222286, 24.94598498075745, 60.15639876928948], "geometry": {"coordinates": [[[24.941483782344076, 60.15415300222286], [24.941479794646696, 60.15639685787316], [24.945981299802302, 60.15639876928948], [24.94598498075745, 60.15415491346664], [24.941483782344076, 60.15415300222286]]], "type": "Polygon"}, "id": "68", "properties": {"__folium_color": "#fdd4c2", "id": 68, "population": 361}, "type": "Feature"}, {"bbox": [24.945951830962528, 60.172105828382186, 24.95045917091009, 60.1743514378554], "geometry": {"coordinates": [[[24.945955516596946, 60.172105828382186], [24.945951830962528, 60.1743496780799], [24.950455792407965, 60.1743514378554], [24.95045917091009, 60.172107587998774], [24.945955516596946, 60.172105828382186]]], "type": "Polygon"}, "id": "69", "properties": {"__folium_color": "#fff0e9", "id": 69, "population": 71}, "type": "Feature"}, {"bbox": [24.945955516596946, 60.169861977918934, 24.950462548875635, 60.172107587998774], "geometry": {"coordinates": [[[24.945959201646, 60.169861977918934], [24.945955516596946, 60.172105828382186], [24.95045917091009, 60.172107587998774], [24.950462548875635, 60.169863737376645], [24.945959201646, 60.169861977918934]]], "type": "Polygon"}, "id": "70", "properties": {"__folium_color": "#fee1d3", "id": 70, "population": 266}, "type": "Feature"}, {"bbox": [24.945962886109825, 60.16537427469577, 24.95046930319745, 60.167619885988984], "geometry": {"coordinates": [[[24.945966569988542, 60.16537427469577], [24.945962886109825, 60.16761812669014], [24.950465926304712, 60.167619885988984], [24.95046930319745, 60.165376033835756], [24.945966569988542, 60.16537427469577]]], "type": "Polygon"}, "id": "71", "properties": {"__folium_color": "#ffece4", "id": 71, "population": 117}, "type": "Feature"}, {"bbox": [24.945966569988542, 60.16313042193569, 24.95047267955396, 60.165376033835756], "geometry": {"coordinates": [[[24.945970253282294, 60.16313042193569], [24.945966569988542, 60.16537427469577], [24.95046930319745, 60.165376033835756], [24.95047267955396, 60.16313218091686], [24.945970253282294, 60.16313042193569]]], "type": "Polygon"}, "id": "72", "properties": {"__folium_color": "#fcc1a8", "id": 72, "population": 502}, "type": "Feature"}, {"bbox": [24.945970253282294, 60.160886478638, 24.950476055509416, 60.16313218091686], "geometry": {"coordinates": [[[24.94597393613853, 60.160886478638], [24.945970253282294, 60.16313042193569], [24.95047267955396, 60.16313218091686], [24.950476055509416, 60.16088823746035], [24.94597393613853, 60.160886478638]]], "type": "Polygon"}, "id": "73", "properties": {"__folium_color": "#fc9373", "id": 73, "population": 799}, "type": "Feature"}, {"bbox": [24.94597393613853, 60.15864262434655, 24.950479430793816, 60.16088823746035], "geometry": {"coordinates": [[[24.945977618262706, 60.15864262434655], [24.94597393613853, 60.160886478638], [24.950476055509416, 60.16088823746035], [24.950479430793816, 60.158644383010135], [24.945977618262706, 60.15864262434655]]], "type": "Polygon"}, "id": "74", "properties": {"__folium_color": "#c8171c", "id": 74, "population": 1623}, "type": "Feature"}, {"bbox": [24.945977618262706, 60.15639876928948, 24.95048280554235, 60.158644383010135], "geometry": {"coordinates": [[[24.945981299802302, 60.15639876928948], [24.945977618262706, 60.15864262434655], [24.950479430793816, 60.158644383010135], [24.95048280554235, 60.15640052779431], [24.945981299802302, 60.15639876928948]]], "type": "Polygon"}, "id": "75", "properties": {"__folium_color": "#67000d", "id": 75, "population": 2136}, "type": "Feature"}, {"bbox": [24.945981299802302, 60.15415491346664, 24.950486179755146, 60.15640052779431], "geometry": {"coordinates": [[[24.94598498075745, 60.15415491346664], [24.945981299802302, 60.15639876928948], [24.95048280554235, 60.15640052779431], [24.950486179755146, 60.15415667181271], [24.94598498075745, 60.15415491346664]]], "type": "Polygon"}, "id": "76", "properties": {"__folium_color": "#fcb296", "id": 76, "population": 601}, "type": "Feature"}, {"bbox": [24.950452413369135, 60.1743514378554, 24.954959906140882, 60.17659689389682], "geometry": {"coordinates": [[[24.950455792407965, 60.1743514378554], [24.950452413369135, 60.176595286946686], [24.9549568342936, 60.17659689389682], [24.954959906140882, 60.17435304466043], [24.950455792407965, 60.1743514378554]]], "type": "Polygon"}, "id": "77", "properties": {"__folium_color": "#fca082", "id": 77, "population": 719}, "type": "Feature"}, {"bbox": [24.950455792407965, 60.172107587998774, 24.954962977500248, 60.17435304466043], "geometry": {"coordinates": [[[24.95045917091009, 60.172107587998774], [24.950455792407965, 60.1743514378554], [24.954959906140882, 60.17435304466043], [24.954962977500248, 60.17210919465869], [24.95045917091009, 60.172107587998774]]], "type": "Polygon"}, "id": "78", "properties": {"__folium_color": "#fc8666", "id": 78, "population": 885}, "type": "Feature"}, {"bbox": [24.95045917091009, 60.169863737376645, 24.954966048371812, 60.17210919465869], "geometry": {"coordinates": [[[24.950462548875635, 60.169863737376645], [24.95045917091009, 60.172107587998774], [24.954962977500248, 60.17210919465869], [24.954966048371812, 60.169865343891495], [24.950462548875635, 60.169863737376645]]], "type": "Polygon"}, "id": "79", "properties": {"__folium_color": "#fff4ee", "id": 79, "population": 24}, "type": "Feature"}, {"bbox": [24.950462548875635, 60.167619885988984, 24.95496911875568, 60.169865343891495], "geometry": {"coordinates": [[[24.950465926304712, 60.167619885988984], [24.950462548875635, 60.169863737376645], [24.954966048371812, 60.169865343891495], [24.95496911875568, 60.167621492358776], [24.950465926304712, 60.167619885988984]]], "type": "Polygon"}, "id": "80", "properties": {"__folium_color": "#fff5f0", "id": 80, "population": 5}, "type": "Feature"}, {"bbox": [24.95046930319745, 60.16313218091686, 24.95497525806078, 60.16537764006051], "geometry": {"coordinates": [[[24.95047267955396, 60.16313218091686], [24.95046930319745, 60.165376033835756], [24.95497218865197, 60.16537764006051], [24.95497525806078, 60.16313378699658], [24.95047267955396, 60.16313218091686]]], "type": "Polygon"}, "id": "81", "properties": {"__folium_color": "#fedfd0", "id": 81, "population": 281}, "type": "Feature"}, {"bbox": [24.95047267955396, 60.16088823746035, 24.954978327104993, 60.16313378699658], "geometry": {"coordinates": [[[24.950476055509416, 60.16088823746035], [24.95047267955396, 60.16313218091686], [24.95497525806078, 60.16313378699658], [24.954978327104993, 60.16088984339509], [24.950476055509416, 60.16088823746035]]], "type": "Polygon"}, "id": "82", "properties": {"__folium_color": "#fee5d9", "id": 82, "population": 208}, "type": "Feature"}, {"bbox": [24.950476055509416, 60.158644383010135, 24.95498139553916, 60.16088984339509], "geometry": {"coordinates": [[[24.950479430793816, 60.158644383010135], [24.950476055509416, 60.16088823746035], [24.954978327104993, 60.16088984339509], [24.95498139553916, 60.15864598879988], [24.950479430793816, 60.158644383010135]]], "type": "Polygon"}, "id": "83", "properties": {"__folium_color": "#fcbca2", "id": 83, "population": 531}, "type": "Feature"}, {"bbox": [24.950479430793816, 60.15640052779431, 24.954984463486177, 60.15864598879988], "geometry": {"coordinates": [[[24.95048280554235, 60.15640052779431], [24.950479430793816, 60.158644383010135], [24.95498139553916, 60.15864598879988], [24.954984463486177, 60.15640213343909], [24.95048280554235, 60.15640052779431]]], "type": "Polygon"}, "id": "84", "properties": {"__folium_color": "#fc8565", "id": 84, "population": 891}, "type": "Feature"}, {"bbox": [24.9549568342936, 60.17435304466043, 24.959463868611003, 60.176598347754364], "geometry": {"coordinates": [[[24.954959906140882, 60.17435304466043], [24.9549568342936, 60.17659689389682], [24.95946110394504, 60.176598347754364], [24.959463868611003, 60.17435449838667], [24.954959906140882, 60.17435304466043]]], "type": "Polygon"}, "id": "85", "properties": {"__folium_color": "#b61319", "id": 85, "population": 1752}, "type": "Feature"}, {"bbox": [24.954959906140882, 60.17210919465869, 24.959466632837852, 60.17435449838667], "geometry": {"coordinates": [[[24.954962977500248, 60.17210919465869], [24.954959906140882, 60.17435304466043], [24.959463868611003, 60.17435449838667], [24.959466632837852, 60.172110648253664], [24.954962977500248, 60.17210919465869]]], "type": "Polygon"}, "id": "86", "properties": {"__folium_color": "#b21218", "id": 86, "population": 1774}, "type": "Feature"}, {"bbox": [24.954962977500248, 60.169865343891495, 24.959469396625675, 60.172110648253664], "geometry": {"coordinates": [[[24.954966048371812, 60.169865343891495], [24.954962977500248, 60.17210919465869], [24.959466632837852, 60.172110648253664], [24.959469396625675, 60.16986679735521], [24.954966048371812, 60.169865343891495]]], "type": "Polygon"}, "id": "87", "properties": {"__folium_color": "#fb6d4d", "id": 87, "population": 1047}, "type": "Feature"}, {"bbox": [24.954966048371812, 60.167621492358776, 24.959472159974574, 60.16986679735521], "geometry": {"coordinates": [[[24.95496911875568, 60.167621492358776], [24.954966048371812, 60.169865343891495], [24.959469396625675, 60.16986679735521], [24.959472159974574, 60.16762294569126], [24.95496911875568, 60.167621492358776]]], "type": "Polygon"}, "id": "88", "properties": {"__folium_color": "#fff4ee", "id": 88, "population": 23}, "type": "Feature"}, {"bbox": [24.95497525806078, 60.16088984339509, 24.959480447499196, 60.16313524006663], "geometry": {"coordinates": [[[24.954978327104993, 60.16088984339509], [24.95497525806078, 60.16313378699658], [24.959477685355985, 60.16313524006663], [24.959480447499196, 60.16089129633396], [24.954978327104993, 60.16088984339509]]], "type": "Polygon"}, "id": "89", "properties": {"__folium_color": "#ffefe8", "id": 89, "population": 86}, "type": "Feature"}, {"bbox": [24.954978327104993, 60.15864598879988, 24.959483209093353, 60.16089129633396], "geometry": {"coordinates": [[[24.95498139553916, 60.15864598879988], [24.954978327104993, 60.16088984339509], [24.959480447499196, 60.16089129633396], [24.959483209093353, 60.15864744160758], [24.95498139553916, 60.15864598879988]]], "type": "Polygon"}, "id": "90", "properties": {"__folium_color": "#fee2d5", "id": 90, "population": 253}, "type": "Feature"}, {"bbox": [24.95498139553916, 60.15640213343909, 24.959485970249084, 60.15864744160758], "geometry": {"coordinates": [[[24.954984463486177, 60.15640213343909], [24.95498139553916, 60.15864598879988], [24.959483209093353, 60.15864744160758], [24.959485970249084, 60.156403586115616], [24.954984463486177, 60.15640213343909]]], "type": "Polygon"}, "id": "91", "properties": {"__folium_color": "#fff0e8", "id": 91, "population": 72}, "type": "Feature"}], "type": "FeatureCollection"});
+
+        
+    
+    geo_json_7513848ab69ffa3be579112cf2f3ffd2.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["id", "population"];
+    let aliases = ["id", "population"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_7513848ab69ffa3be579112cf2f3ffd2.addTo(map_3f5c8fafb0275afa4c14d8328d6e67c5);
+        
+    
+    var color_map_f25c14eeb8abd181dacdfc374635d0de = {};
+
+    
+    color_map_f25c14eeb8abd181dacdfc374635d0de.color = d3.scale.threshold()
+              .domain([5.0, 9.270541082164328, 13.541082164328657, 17.811623246492985, 22.082164328657313, 26.352705410821642, 30.62324649298597, 34.8937875751503, 39.16432865731463, 43.434869739478955, 47.705410821643284, 51.97595190380761, 56.24649298597194, 60.517034068136276, 64.7875751503006, 69.05811623246493, 73.32865731462925, 77.59919839679358, 81.86973947895791, 86.14028056112224, 90.41082164328657, 94.6813627254509, 98.95190380761522, 103.22244488977955, 107.49298597194388, 111.76352705410822, 116.03406813627255, 120.30460921843688, 124.57515030060121, 128.84569138276555, 133.11623246492985, 137.38677354709418, 141.6573146292585, 145.92785571142284, 150.19839679358716, 154.4689378757515, 158.73947895791582, 163.01002004008015, 167.28056112224448, 171.5511022044088, 175.82164328657313, 180.09218436873746, 184.3627254509018, 188.63326653306612, 192.90380761523045, 197.17434869739478, 201.4448897795591, 205.71543086172343, 209.98597194388776, 214.2565130260521, 218.52705410821645, 222.79759519038078, 227.0681362725451, 231.33867735470943, 235.60921843687376, 239.8797595190381, 244.15030060120242, 248.42084168336675, 252.69138276553107, 256.9619238476954, 261.2324649298597, 265.50300601202406, 269.77354709418836, 274.0440881763527, 278.314629258517, 282.5851703406814, 286.8557114228457, 291.12625250501003, 295.39679358717433, 299.6673346693387, 303.937875751503, 308.20841683366734, 312.47895791583164, 316.749498997996, 321.0200400801603, 325.29058116232466, 329.56112224448896, 333.8316633266533, 338.1022044088176, 342.37274549098197, 346.64328657314627, 350.9138276553106, 355.1843687374749, 359.4549098196393, 363.7254509018036, 367.99599198396794, 372.26653306613224, 376.5370741482966, 380.8076152304609, 385.07815631262525, 389.34869739478955, 393.6192384769539, 397.8897795591182, 402.16032064128257, 406.43086172344687, 410.7014028056112, 414.9719438877755, 419.2424849699399, 423.5130260521042, 427.78356713426854, 432.0541082164329, 436.3246492985972, 440.59519038076155, 444.86573146292585, 449.1362725450902, 453.4068136272545, 457.67735470941886, 461.94789579158316, 466.2184368737475, 470.4889779559118, 474.7595190380762, 479.0300601202405, 483.30060120240483, 487.57114228456913, 491.8416833667335, 496.1122244488978, 500.38276553106215, 504.65330661322645, 508.9238476953908, 513.1943887775551, 517.4649298597194, 521.7354709418838, 526.0060120240481, 530.2765531062124, 534.5470941883767, 538.8176352705411, 543.0881763527054, 547.3587174348697, 551.629258517034, 555.8997995991984, 560.1703406813627, 564.440881763527, 568.7114228456913, 572.9819639278558, 577.2525050100201, 581.5230460921844, 585.7935871743487, 590.0641282565131, 594.3346693386774, 598.6052104208417, 602.875751503006, 607.1462925851704, 611.4168336673347, 615.687374749499, 619.9579158316633, 624.2284569138277, 628.498997995992, 632.7695390781563, 637.0400801603206, 641.310621242485, 645.5811623246493, 649.8517034068136, 654.1222444889779, 658.3927855711423, 662.6633266533066, 666.9338677354709, 671.2044088176352, 675.4749498997996, 679.7454909819639, 684.0160320641282, 688.2865731462925, 692.557114228457, 696.8276553106213, 701.0981963927856, 705.3687374749499, 709.6392785571143, 713.9098196392786, 718.1803607214429, 722.4509018036072, 726.7214428857716, 730.9919839679359, 735.2625250501002, 739.5330661322645, 743.8036072144289, 748.0741482965932, 752.3446893787575, 756.6152304609218, 760.8857715430862, 765.1563126252505, 769.4268537074148, 773.6973947895791, 777.9679358717435, 782.2384769539078, 786.5090180360721, 790.7795591182364, 795.0501002004008, 799.3206412825651, 803.5911823647294, 807.8617234468937, 812.1322645290581, 816.4028056112224, 820.6733466933867, 824.943887775551, 829.2144288577155, 833.4849699398798, 837.7555110220441, 842.0260521042084, 846.2965931863728, 850.5671342685371, 854.8376753507014, 859.1082164328658, 863.3787575150301, 867.6492985971944, 871.9198396793587, 876.1903807615231, 880.4609218436874, 884.7314629258517, 889.002004008016, 893.2725450901804, 897.5430861723447, 901.813627254509, 906.0841683366733, 910.3547094188377, 914.625250501002, 918.8957915831663, 923.1663326653306, 927.436873747495, 931.7074148296593, 935.9779559118236, 940.2484969939879, 944.5190380761524, 948.7895791583167, 953.060120240481, 957.3306613226453, 961.6012024048097, 965.871743486974, 970.1422845691383, 974.4128256513026, 978.683366733467, 982.9539078156313, 987.2244488977956, 991.4949899799599, 995.7655310621243, 1000.0360721442886, 1004.3066132264529, 1008.5771543086172, 1012.8476953907816, 1017.1182364729459, 1021.3887775551102, 1025.6593186372745, 1029.9298597194388, 1034.200400801603, 1038.4709418837676, 1042.741482965932, 1047.0120240480962, 1051.2825651302605, 1055.5531062124248, 1059.8236472945891, 1064.0941883767534, 1068.3647294589177, 1072.6352705410823, 1076.9058116232466, 1081.1763527054109, 1085.4468937875752, 1089.7174348697395, 1093.9879759519038, 1098.258517034068, 1102.5290581162324, 1106.799599198397, 1111.0701402805612, 1115.3406813627255, 1119.6112224448898, 1123.881763527054, 1128.1523046092184, 1132.4228456913827, 1136.693386773547, 1140.9639278557115, 1145.2344689378758, 1149.5050100200401, 1153.7755511022044, 1158.0460921843687, 1162.316633266533, 1166.5871743486973, 1170.8577154308616, 1175.1282565130261, 1179.3987975951904, 1183.6693386773547, 1187.939879759519, 1192.2104208416833, 1196.4809619238476, 1200.751503006012, 1205.0220440881762, 1209.2925851703408, 1213.563126252505, 1217.8336673346694, 1222.1042084168337, 1226.374749498998, 1230.6452905811623, 1234.9158316633266, 1239.1863727454909, 1243.4569138276554, 1247.7274549098197, 1251.997995991984, 1256.2685370741483, 1260.5390781563126, 1264.809619238477, 1269.0801603206412, 1273.3507014028055, 1277.62124248497, 1281.8917835671343, 1286.1623246492986, 1290.432865731463, 1294.7034068136272, 1298.9739478957915, 1303.2444889779558, 1307.5150300601204, 1311.7855711422847, 1316.056112224449, 1320.3266533066133, 1324.5971943887776, 1328.8677354709419, 1333.1382765531062, 1337.4088176352705, 1341.679358717435, 1345.9498997995993, 1350.2204408817636, 1354.4909819639279, 1358.7615230460922, 1363.0320641282565, 1367.3026052104208, 1371.573146292585, 1375.8436873747496, 1380.114228456914, 1384.3847695390782, 1388.6553106212425, 1392.9258517034068, 1397.196392785571, 1401.4669338677354, 1405.7374749498997, 1410.0080160320642, 1414.2785571142285, 1418.5490981963928, 1422.8196392785571, 1427.0901803607214, 1431.3607214428857, 1435.63126252505, 1439.9018036072143, 1444.1723446893789, 1448.4428857715432, 1452.7134268537075, 1456.9839679358718, 1461.254509018036, 1465.5250501002004, 1469.7955911823647, 1474.066132264529, 1478.3366733466935, 1482.6072144288578, 1486.877755511022, 1491.1482965931864, 1495.4188376753507, 1499.689378757515, 1503.9599198396793, 1508.2304609218436, 1512.5010020040081, 1516.7715430861724, 1521.0420841683367, 1525.312625250501, 1529.5831663326653, 1533.8537074148296, 1538.124248496994, 1542.3947895791582, 1546.6653306613227, 1550.935871743487, 1555.2064128256513, 1559.4769539078156, 1563.74749498998, 1568.0180360721442, 1572.2885771543085, 1576.5591182364728, 1580.8296593186374, 1585.1002004008017, 1589.370741482966, 1593.6412825651303, 1597.9118236472946, 1602.1823647294589, 1606.4529058116232, 1610.7234468937875, 1614.993987975952, 1619.2645290581163, 1623.5350701402806, 1627.805611222445, 1632.0761523046092, 1636.3466933867735, 1640.6172344689378, 1644.887775551102, 1649.1583166332666, 1653.428857715431, 1657.6993987975952, 1661.9699398797595, 1666.2404809619238, 1670.5110220440881, 1674.7815631262524, 1679.0521042084167, 1683.3226452905812, 1687.5931863727455, 1691.8637274549098, 1696.1342685370741, 1700.4048096192384, 1704.6753507014027, 1708.945891783567, 1713.2164328657316, 1717.4869739478959, 1721.7575150300602, 1726.0280561122245, 1730.2985971943888, 1734.569138276553, 1738.8396793587174, 1743.1102204408817, 1747.3807615230462, 1751.6513026052105, 1755.9218436873748, 1760.192384769539, 1764.4629258517034, 1768.7334669338677, 1773.004008016032, 1777.2745490981963, 1781.5450901803608, 1785.8156312625251, 1790.0861723446894, 1794.3567134268537, 1798.627254509018, 1802.8977955911823, 1807.1683366733466, 1811.438877755511, 1815.7094188376755, 1819.9799599198398, 1824.250501002004, 1828.5210420841684, 1832.7915831663327, 1837.062124248497, 1841.3326653306613, 1845.6032064128256, 1849.87374749499, 1854.1442885771544, 1858.4148296593187, 1862.685370741483, 1866.9559118236473, 1871.2264529058116, 1875.4969939879759, 1879.7675350701402, 1884.0380761523047, 1888.308617234469, 1892.5791583166333, 1896.8496993987976, 1901.120240480962, 1905.3907815631262, 1909.6613226452905, 1913.9318637274548, 1918.2024048096193, 1922.4729458917836, 1926.743486973948, 1931.0140280561122, 1935.2845691382765, 1939.5551102204408, 1943.8256513026051, 1948.0961923847694, 1952.366733466934, 1956.6372745490983, 1960.9078156312626, 1965.1783567134269, 1969.4488977955912, 1973.7194388777555, 1977.9899799599198, 1982.260521042084, 1986.5310621242486, 1990.801603206413, 1995.0721442885772, 1999.3426853707415, 2003.6132264529058, 2007.88376753507, 2012.1543086172344, 2016.4248496993987, 2020.6953907815632, 2024.9659318637275, 2029.2364729458918, 2033.5070140280561, 2037.7775551102204, 2042.0480961923847, 2046.318637274549, 2050.589178356713, 2054.8597194388776, 2059.130260521042, 2063.400801603206, 2067.6713426853707, 2071.9418837675353, 2076.2124248496993, 2080.482965931864, 2084.753507014028, 2089.0240480961925, 2093.2945891783565, 2097.565130260521, 2101.835671342685, 2106.1062124248497, 2110.376753507014, 2114.6472945891783, 2118.917835671343, 2123.188376753507, 2127.4589178356714, 2131.7294589178355, 2136.0])
+              .range(['#fff5f0ff', '#fff5f0ff', '#fff4efff', '#fff4efff', '#fff4eeff', '#fff4eeff', '#fff3edff', '#fff3edff', '#fff2ecff', '#fff2ecff', '#fff2ebff', '#fff2ebff', '#fff1eaff', '#fff1eaff', '#fff0e9ff', '#fff0e9ff', '#fff0e8ff', '#fff0e8ff', '#ffefe8ff', '#ffefe8ff', '#ffeee7ff', '#ffeee7ff', '#ffeee6ff', '#ffeee6ff', '#ffede5ff', '#ffede5ff', '#ffece4ff', '#ffece4ff', '#ffece3ff', '#ffece3ff', '#ffebe2ff', '#ffebe2ff', '#feeae1ff', '#feeae1ff', '#feeae0ff', '#feeadfff', '#fee9dfff', '#fee9deff', '#fee8deff', '#fee8ddff', '#fee8ddff', '#fee7dcff', '#fee7dcff', '#fee7dbff', '#fee7dbff', '#fee6daff', '#fee6daff', '#fee5d9ff', '#fee5d9ff', '#fee5d8ff', '#fee5d8ff', '#fee4d8ff', '#fee4d8ff', '#fee3d7ff', '#fee3d7ff', '#fee3d6ff', '#fee3d6ff', '#fee2d5ff', '#fee2d5ff', '#fee1d4ff', '#fee1d4ff', '#fee1d3ff', '#fee1d3ff', '#fee0d2ff', '#fee0d1ff', '#fedfd0ff', '#fedfd0ff', '#fedecfff', '#feddceff', '#fedccdff', '#fedccdff', '#fedbccff', '#fedbcbff', '#fedacaff', '#fedac9ff', '#fed9c9ff', '#fed9c8ff', '#fed8c7ff', '#fed7c6ff', '#fdd7c6ff', '#fdd6c5ff', '#fdd5c3ff', '#fdd4c2ff', '#fdd4c2ff', '#fdd3c1ff', '#fdd3c0ff', '#fdd2bfff', '#fdd2bfff', '#fdd1beff', '#fdd1bdff', '#fdd0bcff', '#fdcfbcff', '#fdcebbff', '#fdcebaff', '#fdcdb9ff', '#fdcdb9ff', '#fdccb8ff', '#fdccb7ff', '#fdcbb6ff', '#fdcbb6ff', '#fdcab5ff', '#fdcab4ff', '#fdc9b3ff', '#fdc8b3ff', '#fdc7b2ff', '#fdc7b1ff', '#fdc6b0ff', '#fdc6afff', '#fdc5aeff', '#fdc5adff', '#fcc4adff', '#fcc4acff', '#fcc3abff', '#fcc3aaff', '#fcc2aaff', '#fcc1a9ff', '#fcc1a8ff', '#fcc0a7ff', '#fcbfa7ff', '#fcbea6ff', '#fcbea5ff', '#fcbda4ff', '#fcbda3ff', '#fcbca2ff', '#fcbca2ff', '#fcbba1ff', '#fcbaa0ff', '#fcb99fff', '#fcb99fff', '#fcb89eff', '#fcb89dff', '#fcb79cff', '#fcb79cff', '#fcb69bff', '#fcb59aff', '#fcb499ff', '#fcb499ff', '#fcb398ff', '#fcb397ff', '#fcb296ff', '#fcb196ff', '#fcb095ff', '#fcb094ff', '#fcaf93ff', '#fcaf92ff', '#fcae92ff', '#fcae91ff', '#fcad90ff', '#fcac8fff', '#fcab8fff', '#fcab8eff', '#fcaa8dff', '#fca98cff', '#fca98cff', '#fca88bff', '#fca78bff', '#fca68aff', '#fca689ff', '#fca588ff', '#fca588ff', '#fca487ff', '#fca486ff', '#fca385ff', '#fca284ff', '#fca183ff', '#fca183ff', '#fca082ff', '#fc9f81ff', '#fc9e80ff', '#fc9e80ff', '#fc9d7fff', '#fc9d7eff', '#fc9c7dff', '#fc9c7dff', '#fc9b7cff', '#fc9a7bff', '#fc997aff', '#fc997aff', '#fc9879ff', '#fc9878ff', '#fc9777ff', '#fc9676ff', '#fc9576ff', '#fc9575ff', '#fc9474ff', '#fc9473ff', '#fc9373ff', '#fc9372ff', '#fc9272ff', '#fc9171ff', '#fc9070ff', '#fc8f6fff', '#fc8f6fff', '#fc8e6eff', '#fc8e6eff', '#fc8d6dff', '#fc8d6dff', '#fc8c6cff', '#fc8b6bff', '#fc8a6aff', '#fc8a6aff', '#fc8969ff', '#fc8968ff', '#fc8867ff', '#fc8767ff', '#fc8666ff', '#fc8666ff', '#fc8565ff', '#fc8565ff', '#fc8464ff', '#fc8363ff', '#fc8262ff', '#fc8262ff', '#fc8161ff', '#fc8161ff', '#fc8060ff', '#fc805fff', '#fc7f5fff', '#fc7e5eff', '#fc7d5dff', '#fb7d5cff', '#fb7c5cff', '#fb7c5bff', '#fb7b5bff', '#fb7b5aff', '#fb7a5aff', '#fb7959ff', '#fb7858ff', '#fb7757ff', '#fb7757ff', '#fb7656ff', '#fb7656ff', '#fb7555ff', '#fb7555ff', '#fb7454ff', '#fb7353ff', '#fb7252ff', '#fb7252ff', '#fb7151ff', '#fb7151ff', '#fb7050ff', '#fb704fff', '#fb6f4eff', '#fb6e4eff', '#fb6d4dff', '#fb6d4dff', '#fb6c4cff', '#fb6c4cff', '#fb6b4bff', '#fb6a4bff', '#fb694aff', '#fb694aff', '#fb6849ff', '#fa6748ff', '#fa6648ff', '#fa6647ff', '#fa6547ff', '#fa6446ff', '#fa6346ff', '#f96345ff', '#f96245ff', '#f96144ff', '#f96044ff', '#f95f43ff', '#f95f43ff', '#f85e42ff', '#f85d42ff', '#f85c41ff', '#f85c41ff', '#f75b40ff', '#f75b40ff', '#f75a3fff', '#f7593fff', '#f7583eff', '#f6583eff', '#f6573dff', '#f6563dff', '#f6553cff', '#f6553cff', '#f6543bff', '#f5533bff', '#f5523aff', '#f5523aff', '#f5513aff', '#f4503aff', '#f44f39ff', '#f44f39ff', '#f44d38ff', '#f44d38ff', '#f44c37ff', '#f34b37ff', '#f34a36ff', '#f34a35ff', '#f34935ff', '#f34834ff', '#f34734ff', '#f24733ff', '#f24633ff', '#f24532ff', '#f24432ff', '#f14331ff', '#f14331ff', '#f14230ff', '#f14130ff', '#f1402fff', '#f1402fff', '#f03f2eff', '#f03f2eff', '#f03e2dff', '#f03d2dff', '#f03c2cff', '#f03c2cff', '#ef3b2cff', '#ee3a2cff', '#ee392bff', '#ed392bff', '#ed382bff', '#ec382bff', '#ec372aff', '#eb372aff', '#eb362aff', '#ea362aff', '#ea3529ff', '#e93529ff', '#e93429ff', '#e83429ff', '#e73328ff', '#e63328ff', '#e63228ff', '#e53128ff', '#e53027ff', '#e43027ff', '#e42f27ff', '#e32f27ff', '#e32e27ff', '#e22d26ff', '#e22d26ff', '#e12c26ff', '#e12c26ff', '#e02b25ff', '#df2b25ff', '#de2a25ff', '#de2a25ff', '#dd2924ff', '#dd2924ff', '#dc2824ff', '#dc2824ff', '#db2723ff', '#db2723ff', '#da2623ff', '#d92523ff', '#d92422ff', '#d82422ff', '#d82322ff', '#d72322ff', '#d72221ff', '#d52221ff', '#d52121ff', '#d42121ff', '#d42020ff', '#d32020ff', '#d31f20ff', '#d21f20ff', '#d21e1fff', '#d11e1fff', '#d11d1fff', '#d01d1fff', '#d01c1fff', '#cf1b1fff', '#cf1a1eff', '#ce1a1eff', '#cd191eff', '#cc181eff', '#cc181dff', '#cb181dff', '#cb181dff', '#ca181dff', '#ca181dff', '#c9171cff', '#c9171cff', '#c8171cff', '#c8171cff', '#c7171cff', '#c6171cff', '#c5161cff', '#c5161cff', '#c4161bff', '#c4161bff', '#c3161bff', '#c2161bff', '#c2161bff', '#c1161bff', '#c1151bff', '#c0151bff', '#bf151aff', '#be151aff', '#be151aff', '#bd151aff', '#bd141aff', '#bc141aff', '#bc141aff', '#bb141aff', '#ba1419ff', '#b91419ff', '#b91419ff', '#b81419ff', '#b81319ff', '#b71319ff', '#b71319ff', '#b61319ff', '#b61318ff', '#b51318ff', '#b41218ff', '#b31218ff', '#b31218ff', '#b21218ff', '#b21218ff', '#b11217ff', '#b11217ff', '#b01117ff', '#b01117ff', '#af1117ff', '#ae1117ff', '#ad1117ff', '#ad1117ff', '#ac1016ff', '#ab1016ff', '#ab1016ff', '#aa1016ff', '#aa1016ff', '#a91016ff', '#a91016ff', '#a81016ff', '#a80f15ff', '#a70f15ff', '#a60f15ff', '#a50f15ff', '#a50f15ff', '#a30f15ff', '#a20e15ff', '#a10e15ff', '#a00e14ff', '#9f0e14ff', '#9e0d14ff', '#9d0d14ff', '#9d0d14ff', '#9c0d14ff', '#9b0c14ff', '#9a0c14ff', '#990c13ff', '#980c13ff', '#970b13ff', '#960b13ff', '#950b13ff', '#940b13ff', '#930a13ff', '#920a13ff', '#910a12ff', '#900912ff', '#8f0912ff', '#8e0912ff', '#8d0912ff', '#8c0812ff', '#8b0812ff', '#8a0811ff', '#890811ff', '#880811ff', '#870811ff', '#860711ff', '#850711ff', '#840711ff', '#830711ff', '#820610ff', '#810610ff', '#800610ff', '#7f0610ff', '#7d0510ff', '#7c0510ff', '#7b0510ff', '#7a0510ff', '#7a040fff', '#79040fff', '#78040fff', '#77040fff', '#76030fff', '#75030fff', '#74030fff', '#73030fff', '#72020eff', '#71020eff', '#70020eff', '#6f020eff', '#6e010eff', '#6d010eff', '#6c010eff', '#6b010eff', '#6a000dff', '#69000dff', '#68000dff', '#67000dff']);
+    
+
+    color_map_f25c14eeb8abd181dacdfc374635d0de.x = d3.scale.linear()
+              .domain([5.0, 2136.0])
+              .range([0, 450 - 50]);
+
+    color_map_f25c14eeb8abd181dacdfc374635d0de.legend = L.control({position: 'topright'});
+    color_map_f25c14eeb8abd181dacdfc374635d0de.legend.onAdd = function (map) {var div = L.DomUtil.create('div', 'legend'); return div};
+    color_map_f25c14eeb8abd181dacdfc374635d0de.legend.addTo(map_3f5c8fafb0275afa4c14d8328d6e67c5);
+
+    color_map_f25c14eeb8abd181dacdfc374635d0de.xAxis = d3.svg.axis()
+        .scale(color_map_f25c14eeb8abd181dacdfc374635d0de.x)
+        .orient("top")
+        .tickSize(1)
+        .tickValues([5.0, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 222.27843137254902, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 439.55686274509804, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 656.8352941176471, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 874.1137254901961, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 1091.3921568627452, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 1308.6705882352942, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 1525.9490196078432, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 1743.2274509803922, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', 1960.5058823529412, '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '', '']);
+
+    color_map_f25c14eeb8abd181dacdfc374635d0de.svg = d3.select(".legend.leaflet-control").append("svg")
+        .attr("id", 'legend')
+        .attr("width", 450)
+        .attr("height", 40);
+
+    color_map_f25c14eeb8abd181dacdfc374635d0de.g = color_map_f25c14eeb8abd181dacdfc374635d0de.svg.append("g")
+        .attr("class", "key")
+        .attr("fill", "black")
+        .attr("transform", "translate(25,16)");
+
+    color_map_f25c14eeb8abd181dacdfc374635d0de.g.selectAll("rect")
+        .data(color_map_f25c14eeb8abd181dacdfc374635d0de.color.range().map(function(d, i) {
+          return {
+            x0: i ? color_map_f25c14eeb8abd181dacdfc374635d0de.x(color_map_f25c14eeb8abd181dacdfc374635d0de.color.domain()[i - 1]) : color_map_f25c14eeb8abd181dacdfc374635d0de.x.range()[0],
+            x1: i < color_map_f25c14eeb8abd181dacdfc374635d0de.color.domain().length ? color_map_f25c14eeb8abd181dacdfc374635d0de.x(color_map_f25c14eeb8abd181dacdfc374635d0de.color.domain()[i]) : color_map_f25c14eeb8abd181dacdfc374635d0de.x.range()[1],
+            z: d
+          };
+        }))
+      .enter().append("rect")
+        .attr("height", 40 - 30)
+        .attr("x", function(d) { return d.x0; })
+        .attr("width", function(d) { return d.x1 - d.x0; })
+        .style("fill", function(d) { return d.z; });
+
+    color_map_f25c14eeb8abd181dacdfc374635d0de.g.call(color_map_f25c14eeb8abd181dacdfc374635d0de.xAxis).append("text")
+        .attr("class", "caption")
+        .attr("y", 21)
+        .attr("fill", "black")
+        .text("population");
+    
+        function geo_json_aab6b9bd616c180b260116c0222b776f_styler(feature) {
+            switch(feature.id) {
+                default:
+                    return {"fillOpacity": 0.5, "weight": 2};
+            }
+        }
+        function geo_json_aab6b9bd616c180b260116c0222b776f_highlighter(feature) {
+            switch(feature.id) {
+                default:
+                    return {"fillOpacity": 0.75};
+            }
+        }
+        function geo_json_aab6b9bd616c180b260116c0222b776f_pointToLayer(feature, latlng) {
+            var opts = {
+  "radius": 2,
+  "fill": true,
+};
+            
+            let style = geo_json_aab6b9bd616c180b260116c0222b776f_styler(feature)
+            Object.assign(opts, style)
+            
+            return new L.Marker(latlng, opts)
+        }
+
+        function geo_json_aab6b9bd616c180b260116c0222b776f_onEachFeature(feature, layer) {
+
+            layer.on({
+                mouseout: function(e) {
+                    if(typeof e.target.setStyle === "function"){
+                            geo_json_aab6b9bd616c180b260116c0222b776f.resetStyle(e.target);
+                    }
+                },
+                mouseover: function(e) {
+                    if(typeof e.target.setStyle === "function"){
+                        const highlightStyle = geo_json_aab6b9bd616c180b260116c0222b776f_highlighter(e.target.feature)
+                        e.target.setStyle(highlightStyle);
+                    }
+                },
+            });
+        };
+        var geo_json_aab6b9bd616c180b260116c0222b776f = L.geoJson(null, {
+                onEachFeature: geo_json_aab6b9bd616c180b260116c0222b776f_onEachFeature,
+            
+                style: geo_json_aab6b9bd616c180b260116c0222b776f_styler,
+                pointToLayer: geo_json_aab6b9bd616c180b260116c0222b776f_pointToLayer,
+            ...{
+}
+        });
+
+        function geo_json_aab6b9bd616c180b260116c0222b776f_add (data) {
+            geo_json_aab6b9bd616c180b260116c0222b776f
+                .addData(data);
+        }
+            geo_json_aab6b9bd616c180b260116c0222b776f_add({"bbox": [24.94152, 60.17066, 24.94152, 60.17066], "features": [{"bbox": [24.94152, 60.17066, 24.94152, 60.17066], "geometry": {"coordinates": [24.94152, 60.17066], "type": "Point"}, "id": "0", "properties": {"id": "railway_station"}, "type": "Feature"}], "type": "FeatureCollection"});
+
+        
+    
+    geo_json_aab6b9bd616c180b260116c0222b776f.bindTooltip(
+    function(layer){
+    let div = L.DomUtil.create('div');
+    
+    let handleObject = feature => {
+        if (feature === null) {
+            return '';
+        } else if (typeof(feature)=='object') {
+            return JSON.stringify(feature);
+        } else {
+            return feature;
+        }
+    }
+    let fields = ["id"];
+    let aliases = ["id"];
+    let table = '<table>' +
+        String(
+        fields.map(
+        (v,i)=>
+        `<tr>
+            <th>${aliases[i]}</th>
+            
+            <td>${handleObject(layer.feature.properties[v])}</td>
+        </tr>`).join(''))
+    +'</table>';
+    div.innerHTML=table;
+    
+    return div
+    }
+    ,{
+  "sticky": true,
+  "className": "foliumtooltip",
+});
+                     
+    
+            geo_json_aab6b9bd616c180b260116c0222b776f.addTo(map_3f5c8fafb0275afa4c14d8328d6e67c5);
+        
+</script>
+</html>
