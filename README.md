@@ -7,7 +7,7 @@ estimating the  impact of 2 policy levers that ACTUALLY could be implemented
 
 2. adding a protected bike lane thing (nobody bikes because you have to be on the road or on the crappy sidewalk) 
 
-analyze this in a 2x2 factorial (control, one, the other, both)
+analyze this in a 2x2 (control, one, the other, both)
 how do these impact mode share - car trips vs. everything else (bike, transit, walk)
 
 in a fixed study area (ex. columbia–ellicott city corridor suburban MD baltimore/dc metro). 

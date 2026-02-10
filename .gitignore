@@ -1,8 +1,33 @@
-# python
+# Python
 __pycache__/
 *.pyc
+*.pyo
 .venv/
+venv/
 .env
-# data & outputs
-data/
+
+# Data (large files, download separately)
+data/osm/*.pbf
+data/gtfs/**/*.zip
+data/export/*.json
+
+# Generated outputs
 outputs/
+*.html
+*.png
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# Keep directory structure
+!data/osm/.gitkeep
+!data/gtfs/baseline/.gitkeep
+!data/gtfs/doubled/.gitkeep
+!data/export/.gitkeep
+!outputs/.gitkeep

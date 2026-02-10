@@ -1,0 +1,32 @@
+# Suburban Simulation - Python Dependencies
+# Install: pip install -r analysis/requirements.txt
+#
+# NOTE: The heavy analysis (r5py routing) runs on the Windows desktop.
+# The MacBook only needs osmnx + geopandas for data prep / quick testing.
+
+# === Core routing (Windows/WSL only — needs 16GB RAM) ===
+r5py>=0.1.1
+
+# === Spatial data (both machines) ===
+geopandas>=0.14.0
+shapely>=2.0.0
+osmnx>=1.9.0
+pyrosm>=0.6.0
+
+# === Data manipulation (both machines) ===
+pandas>=2.0.0
+numpy>=1.24.0
+
+# === Visualization / thesis figures (both machines) ===
+matplotlib>=3.7.0
+folium>=0.15.0
+
+# === GTFS manipulation (Windows/WSL only) ===
+gtfs-kit>=7.0.0
+
+# === OSM PBF modification for Policy B (Windows/WSL only) ===
+# pyosmium installs easily on Linux/WSL: pip install pyosmium
+pyosmium>=3.7.0
+
+# === Utilities ===
+tqdm>=4.65.0
