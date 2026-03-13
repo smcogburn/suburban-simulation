@@ -1,20 +1,31 @@
 """
 Data preparation: clip OSM data, extract buildings and roads for visualization.
 
+Uses osmnx (Overpass API) for building/road extraction — works on Windows without pyrosm.
+
 Usage:
     python -m analysis.data_prep              # Run all prep steps
-    python -m analysis.data_prep --step clip  # Just clip OSM (needs osmium-tool, run on WSL)
-    python -m analysis.data_prep --step extract  # Extract buildings/roads (works on MacBook)
+    python -m analysis.data_prep --step clip  # Just clip OSM (needs osmium-tool)
+    python -m analysis.data_prep --step extract  # Extract buildings/roads (needs internet)
 """
 
 import json
 import subprocess
 import sys
+import tempfile
+from pathlib import Path
 
 import geopandas as gpd
 import numpy as np
+import osmnx as ox
 import pandas as pd
-from shapely.geometry import Polygon
+
+# Cache to system temp (not OneDrive) to avoid sync/space issues
+ox.settings.cache_folder = str(Path(tempfile.gettempdir()) / "osmnx_cache")
+ox.settings.use_cache = True
+# Raise the per-request area limit so the entire VIZ_BBOX downloads in 1-2 requests
+# (default is tiny, causing ~39,000 sub-requests and many minutes of wait)
+ox.settings.max_query_area_size = 50_000_000  # 50 km²
 
 from analysis.config import (
     ANALYSIS_BBOX,
@@ -60,27 +71,24 @@ def clip_osm_to_study_area():
 
 def extract_buildings():
     """
-    Extract building footprints from OSM for the visualization area.
-    Uses pyrosm to read the PBF directly with a bbox filter (works on MacBook).
+    Extract building footprints from OSM via osmnx (Overpass API).
+    Requires internet. Works on Windows without pyrosm.
     """
-    import pyrosm
-
     bbox = VIZ_BBOX
-    print(f"Extracting buildings for viz area...")
+    print(f"Extracting buildings for viz area (via osmnx/Overpass)...")
     print(f"  Bbox: W:{bbox['west']} S:{bbox['south']} E:{bbox['east']} N:{bbox['north']}")
 
-    osm = pyrosm.OSM(
-        str(OSM_PBF_FULL),
-        bounding_box=[bbox["west"], bbox["south"], bbox["east"], bbox["north"]],
+    buildings = ox.features_from_bbox(
+        bbox=(bbox["west"], bbox["south"], bbox["east"], bbox["north"]),
+        tags={"building": True},
     )
 
-    buildings = osm.get_buildings()
     if buildings is None or len(buildings) == 0:
         print("  WARNING: No buildings found")
         return {"type": "buildings", "count": 0, "features": []}
 
-    # Filter to polygons
-    buildings = buildings[buildings.geometry.type == "Polygon"]
+    # Filter to Polygon geometries only
+    buildings = buildings[buildings.geometry.type == "Polygon"].copy()
     print(f"  Found {len(buildings)} building polygons")
 
     def get_height(row):
@@ -115,34 +123,27 @@ def extract_buildings():
 
 def extract_roads():
     """
-    Extract road network from OSM for the visualization area.
-    Uses pyrosm to read the PBF directly with a bbox filter (works on MacBook).
+    Extract road network from OSM via osmnx (Overpass API).
+    Requires internet. Works on Windows without pyrosm.
     """
-    import pyrosm
-
     bbox = VIZ_BBOX
-    print(f"Extracting road network for viz area...")
+    print(f"Extracting road network for viz area (via osmnx/Overpass)...")
     print(f"  Bbox: W:{bbox['west']} S:{bbox['south']} E:{bbox['east']} N:{bbox['north']}")
 
-    osm = pyrosm.OSM(
-        str(OSM_PBF_FULL),
-        bounding_box=[bbox["west"], bbox["south"], bbox["east"], bbox["north"]],
+    G = ox.graph_from_bbox(
+        bbox=(bbox["west"], bbox["south"], bbox["east"], bbox["north"]),
+        network_type="drive",
     )
-
-    edges = osm.get_network(network_type="driving")
-    if edges is None or len(edges) == 0:
-        print("  WARNING: No roads found")
-        return {"type": "road_network", "count": 0, "segments": []}
-
+    _, edges = ox.graph_to_gdfs(G)
     print(f"  Found {len(edges)} road segments")
 
+    lat_center = (bbox["south"] + bbox["north"]) / 2
     segments = []
     for idx, row in edges.iterrows():
         geom = row.geometry
         if geom is None or geom.is_empty:
             continue
 
-        # Handle both LineString and MultiLineString
         if geom.geom_type == "MultiLineString":
             coords_list = list(geom.geoms[0].coords)
         elif geom.geom_type == "LineString":
@@ -158,7 +159,6 @@ def extract_roads():
         if highway is None:
             highway = "unclassified"
 
-        # Lane count
         lanes_raw = row.get("lanes", None)
         if lanes_raw is not None:
             try:
@@ -168,33 +168,20 @@ def extract_roads():
         else:
             lanes = DEFAULT_LANES.get(highway, 1)
 
-        # Speed limit
         maxspeed = row.get("maxspeed", None)
         if maxspeed is not None:
             try:
                 speed_val = float(str(maxspeed).replace(" mph", "").replace(" km/h", ""))
-                # Assume mph for US data
-                if "km/h" in str(maxspeed):
-                    speed_kmh = speed_val
-                else:
-                    speed_kmh = speed_val * 1.60934
+                speed_kmh = speed_val if "km/h" in str(maxspeed) else speed_val * 1.60934
             except (ValueError, TypeError):
                 speed_kmh = 50.0
         else:
             speed_kmh = 50.0
 
-        name = row.get("name", "")
-        if name is None:
-            name = ""
-
+        name = row.get("name", "") or ""
         cap_per_lane = CAPACITY_PER_LANE.get(highway, 1000)
-        capacity = cap_per_lane * lanes
 
-        # Length in meters (use projected geometry)
-        try:
-            length_m = row.get("length", geom.length * 111320 * np.cos(np.radians(39.21)))
-        except Exception:
-            length_m = 100.0
+        length_m = row.get("length", geom.length * 111320 * np.cos(np.radians(lat_center)))
 
         segments.append({
             "id": f"seg_{idx}",
@@ -203,7 +190,7 @@ def extract_roads():
             "lanes": lanes,
             "name": str(name),
             "length_m": round(float(length_m), 1),
-            "capacity_per_hour": capacity,
+            "capacity_per_hour": cap_per_lane * lanes,
             "free_flow_speed_kmh": round(speed_kmh, 1),
         })
 

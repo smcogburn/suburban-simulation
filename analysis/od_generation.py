@@ -36,7 +36,7 @@ def get_residential_origins(num_origins: int = NUM_ORIGINS) -> gpd.GeoDataFrame:
     try:
         # Try to get residential buildings from OSM
         buildings = ox.features_from_bbox(
-            bbox=(bbox["north"], bbox["south"], bbox["east"], bbox["west"]),
+            bbox=(bbox["west"], bbox["south"], bbox["east"], bbox["north"]),
             tags={"building": ["residential", "apartments", "house", "detached", "yes"]},
         )
         buildings = buildings[buildings.geometry.type.isin(["Polygon", "MultiPolygon"])]
@@ -85,7 +85,7 @@ def get_destinations(num_destinations: int = NUM_DESTINATIONS) -> gpd.GeoDataFra
     try:
         # Get commercial/office buildings and amenities
         commercial = ox.features_from_bbox(
-            bbox=(bbox["north"], bbox["south"], bbox["east"], bbox["west"]),
+            bbox=(bbox["west"], bbox["south"], bbox["east"], bbox["north"]),
             tags={
                 "building": ["commercial", "office", "retail", "industrial"],
                 "amenity": ["school", "hospital", "university", "marketplace"],
@@ -127,26 +127,27 @@ def get_destinations(num_destinations: int = NUM_DESTINATIONS) -> gpd.GeoDataFra
 
 def _fallback_destinations() -> gpd.GeoSeries:
     """
-    Manually defined major destinations in the Columbia-Ellicott City area.
+    Manually defined major destinations in the Bowie/Crofton/Annapolis area.
     Used as fallback if OSM data extraction fails.
     """
     locations = {
-        "Columbia Town Center": (-76.8391, 39.2037),
-        "Columbia Mall": (-76.8597, 39.2098),
-        "Ellicott City Downtown": (-76.7987, 39.2674),
-        "Gateway Business Park": (-76.8313, 39.2097),
-        "Dobbin Road Business": (-76.8459, 39.2003),
-        "Columbia Gateway": (-76.8262, 39.2046),
-        "Snowden Square": (-76.8572, 39.1859),
-        "Long Reach Village": (-76.8195, 39.2145),
-        "Howard County Gen Hospital": (-76.8374, 39.2182),
-        "Wilde Lake Village": (-76.8654, 39.2124),
-        "Harper Choice Village": (-76.8711, 39.2066),
-        "Oakland Mills Village": (-76.8390, 39.2098),
-        "Owen Brown Village": (-76.8282, 39.1977),
-        "Hickory Ridge Village": (-76.8596, 39.1960),
-        "Kings Contrivance Village": (-76.8395, 39.1870),
-    ]
+        "Annapolis Mall": (-76.5557, 38.9820),
+        "Annapolis Downtown": (-76.4922, 38.9784),
+        "US Naval Academy": (-76.4852, 38.9832),
+        "Annapolis Town Center": (-76.5480, 38.9958),
+        "Bowie Town Center": (-76.7313, 38.9470),
+        "Bowie State University": (-76.7302, 38.9446),
+        "Crofton Commons": (-76.6832, 38.9971),
+        "Crofton Village Center": (-76.6861, 39.0069),
+        "Waugh Chapel Towne Centre": (-76.6703, 39.0094),
+        "Fort Meade": (-76.7323, 39.1031),
+        "Odenton MARC Station": (-76.6999, 39.0773),
+        "Severna Park": (-76.5488, 39.0677),
+        "Glen Burnie": (-76.6280, 39.1631),
+        "Gambrills": (-76.6652, 39.0466),
+        "Parole": (-76.5375, 38.9976),
+    }
+
     return gpd.GeoSeries(
         [Point(lng, lat) for lng, lat in locations.values()],
         crs="EPSG:4326",

@@ -16,8 +16,8 @@ EXPORT_DIR = DATA_DIR / "export"
 OUTPUTS_DIR = PROJECT_ROOT / "outputs"
 
 # OSM files
-OSM_PBF_FULL = OSM_DIR / "maryland-260209.osm.pbf"
-OSM_PBF_STUDY = OSM_DIR / "columbia-study.osm.pbf"
+OSM_PBF_FULL = OSM_DIR / "maryland-260309.osm.pbf"
+OSM_PBF_STUDY = OSM_DIR / "clipped.osm.pbf"
 OSM_PBF_BIKE = OSM_DIR / "columbia-bike.osm.pbf"
 
 # GTFS feed filenames (same names used in baseline/ and doubled/)
@@ -31,26 +31,26 @@ GTFS_FEEDS = [
 
 # === Study Area Bounding Boxes ===
 
-# Analysis area (larger - provides routing context beyond the viz boundary)
+# Analysis area (Bowie / Crofton / Annapolis corridor)
 ANALYSIS_BBOX = {
-    "west": -76.95,
-    "south": 39.15,
-    "east": -76.72,
-    "north": 39.30,
+    "west": -76.90,
+    "south": 38.87,
+    "east": -76.42,
+    "north": 39.10,
 }
 
-# Visualization area (smaller ~10-15 km^2 focused on Columbia)
+# Visualization area (~5km around downtown Annapolis for 3D flyover)
 VIZ_BBOX = {
-    "west": -76.90,
-    "south": 39.18,
-    "east": -76.80,
-    "north": 39.24,
+    "west": -76.52,
+    "south": 38.95,
+    "east": -76.46,
+    "north": 39.00,
 }
 
 # Center point for coordinate projection (used by both Python export and JS viz)
 VIZ_CENTER = {
-    "lng": -76.85,
-    "lat": 39.21,
+    "lng": -76.492,
+    "lat": 38.978,
 }
 
 # === Temporal Settings ===

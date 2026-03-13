@@ -9,7 +9,6 @@ venv/
 # Data (large files, download separately)
 data/osm/*.pbf
 data/gtfs/**/*.zip
-data/export/*.json
 
 # Generated outputs
 outputs/
