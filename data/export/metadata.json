@@ -1,0 +1,52 @@
+{
+  "study_area": {
+    "center": [
+      -76.492,
+      38.978
+    ],
+    "bbox": {
+      "west": -76.52,
+      "south": 38.95,
+      "east": -76.46,
+      "north": 39.0
+    }
+  },
+  "time_range": {
+    "start": "07:00",
+    "end": "09:30",
+    "duration_seconds": 9000
+  },
+  "scenarios": {
+    "baseline": {
+      "label": "Baseline",
+      "description": "Current transit network, no bike infrastructure changes"
+    },
+    "policy_a": {
+      "label": "Policy A: Doubled Bus Frequency",
+      "description": "Bus headways halved across local bus network"
+    },
+    "policy_b": {
+      "label": "Policy B: Protected Bike Lanes",
+      "description": "Protected bike lanes on arterial roads (LTS reduced to 2)"
+    },
+    "policy_ab": {
+      "label": "Both Policies",
+      "description": "Doubled bus frequency + protected bike lanes combined"
+    }
+  },
+  "mode_colors": {
+    "CAR": "#ff4444",
+    "TRANSIT": "#4488ff",
+    "WALK": "#ffcc00",
+    "BICYCLE": "#44ff88"
+  },
+  "stats": {
+    "baseline": {
+      "car_pct": 100.0,
+      "transit_pct": 0.0,
+      "bicycle_pct": 0.0,
+      "walk_pct": 0.0,
+      "total_trips": 6000
+    }
+  }
+}

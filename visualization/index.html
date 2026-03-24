@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suburban Simulation — Annapolis Corridor</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "./lib/three.module.js",
+            "three/addons/": "./lib/"
+        }
+    }
+    </script>
+</head>
+<body>
+
+<!-- Loading screen -->
+<div id="loading">Loading simulation data...</div>
+
+<!-- Stats panel (top-left) -->
+<div id="stats-panel">
+    <div id="stats-title">Mode Share</div>
+    <div class="stat-row">
+        <div class="stat-dot" style="background:#ff4444"></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-car" style="background:#ff4444;width:100%"></div></div>
+        <div class="stat-pct" id="pct-car">—</div>
+    </div>
+    <div class="stat-row">
+        <div class="stat-dot" style="background:#4488ff"></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-transit" style="background:#4488ff;width:0%"></div></div>
+        <div class="stat-pct" id="pct-transit">—</div>
+    </div>
+    <div class="stat-row">
+        <div class="stat-dot" style="background:#44ff88"></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-bike" style="background:#44ff88;width:0%"></div></div>
+        <div class="stat-pct" id="pct-bike">—</div>
+    </div>
+    <div class="stat-row">
+        <div class="stat-dot" style="background:#ffcc00"></div>
+        <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-walk" style="background:#ffcc00;width:0%"></div></div>
+        <div class="stat-pct" id="pct-walk">—</div>
+    </div>
+</div>
+
+<!-- Scenario panel (top-right) -->
+<div id="scenario-panel">
+    <button class="scenario-btn active" data-scenario="baseline">Baseline</button>
+    <button class="scenario-btn" data-scenario="policy_a">Policy A: Doubled Bus Frequency</button>
+    <button class="scenario-btn" data-scenario="policy_b">Policy B: Protected Bike Lanes</button>
+    <button class="scenario-btn" data-scenario="policy_ab">Both Policies</button>
+</div>
+
+<!-- Time panel (bottom-center) -->
+<div id="time-panel">
+    <button id="play-btn" title="Play/Pause (Space)">▶</button>
+    <input id="time-slider" type="range" min="0" max="9000" value="0" step="1">
+    <div id="time-display">7:00 AM</div>
+    <select id="speed-select">
+        <option value="10">10×</option>
+        <option value="30" selected>30×</option>
+        <option value="60">60×</option>
+        <option value="120">120×</option>
+    </select>
+</div>
+
+<!-- Info panel (bottom-left) -->
+<div id="info-panel">
+    <span>Drag to orbit · Scroll to zoom · Space to play</span>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

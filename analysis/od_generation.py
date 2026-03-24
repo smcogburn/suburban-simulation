@@ -16,6 +16,7 @@ import pandas as pd
 from shapely.geometry import Point
 
 from analysis.config import (
+    ANALYSIS_BBOX,
     VIZ_BBOX,
     NUM_ORIGINS,
     NUM_DESTINATIONS,
@@ -28,9 +29,10 @@ from analysis.config import (
 def get_residential_origins(num_origins: int = NUM_ORIGINS) -> gpd.GeoDataFrame:
     """
     Sample residential building centroids as trip origins.
+    Uses ANALYSIS_BBOX (full Bowie/Crofton/Annapolis corridor) for realistic suburban commutes.
     Falls back to random points within the study area if OSM data is sparse.
     """
-    bbox = VIZ_BBOX
+    bbox = ANALYSIS_BBOX
     print(f"Generating {num_origins} origin points from residential buildings...")
 
     try:
@@ -47,18 +49,17 @@ def get_residential_origins(num_origins: int = NUM_ORIGINS) -> gpd.GeoDataFrame:
             num_origins = len(buildings)
 
         # Calculate footprint area as sampling weight (larger buildings = more residents)
-        buildings_proj = buildings.to_crs(epsg=3857)  # Project for area calculation
+        buildings_proj = buildings.to_crs(epsg=3857)
         buildings["area"] = buildings_proj.geometry.area
         weights = buildings["area"] / buildings["area"].sum()
 
-        # Weighted random sample
+        # Weighted random sample — compute centroids in projected CRS to avoid warning
         sampled = buildings.sample(n=num_origins, weights=weights, random_state=42)
-        centroids = sampled.geometry.centroid
+        centroids = sampled.to_crs(epsg=3857).geometry.centroid.to_crs("EPSG:4326")
 
     except Exception as e:
         print(f"  Warning: Could not get buildings from OSM: {e}")
         print(f"  Falling back to random points within study area")
-        # Generate random points within bounding box
         rng = np.random.default_rng(42)
         lngs = rng.uniform(bbox["west"], bbox["east"], num_origins)
         lats = rng.uniform(bbox["south"], bbox["north"], num_origins)
@@ -77,9 +78,10 @@ def get_residential_origins(num_origins: int = NUM_ORIGINS) -> gpd.GeoDataFrame:
 def get_destinations(num_destinations: int = NUM_DESTINATIONS) -> gpd.GeoDataFrame:
     """
     Sample commercial/employment destinations from OSM.
-    Falls back to manually defined Columbia-area destinations if OSM data is sparse.
+    Uses ANALYSIS_BBOX (full corridor) for realistic suburban destinations.
+    Falls back to manually defined Annapolis-area destinations if OSM data is sparse.
     """
-    bbox = VIZ_BBOX
+    bbox = ANALYSIS_BBOX
     print(f"Generating {num_destinations} destination points...")
 
     try:
@@ -93,8 +95,8 @@ def get_destinations(num_destinations: int = NUM_DESTINATIONS) -> gpd.GeoDataFra
             },
         )
 
-        # Get centroids for all features
-        centroids = commercial.geometry.centroid
+        # Get centroids in projected CRS to avoid warning, then back to WGS84
+        centroids = commercial.to_crs(epsg=3857).geometry.centroid.to_crs("EPSG:4326")
         # Make sure they're points in WGS84
         if centroids.crs is None:
             centroids = centroids.set_crs("EPSG:4326")

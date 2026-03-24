@@ -39,11 +39,14 @@ def build_network(osm_pbf: Path, gtfs_dir: Path) -> r5py.TransportNetwork:
     if not gtfs_files:
         print("  WARNING: No GTFS files found. Transit routing will not work.")
 
+    if not osm_pbf.exists():
+        raise FileNotFoundError(f"OSM PBF not found: {osm_pbf}")
+
     print(f"  Building network from {osm_pbf.name} + {len(gtfs_files)} GTFS feeds...")
 
     network = r5py.TransportNetwork(
         str(osm_pbf),
-        gtfs_files if gtfs_files else None,
+        gtfs_files,  # pass [] when empty, not None — r5py accepts empty list
     )
 
     print("  Network built successfully.")
@@ -130,8 +133,8 @@ def run_scenario_fast(
         modes=[r5py.TransportMode.CAR],
     )
     car_times = car_times.rename(columns={"travel_time": "car_time"})
-    # Convert timedelta to minutes
-    car_times["car_minutes"] = car_times["car_time"].dt.total_seconds() / 60
+    # r5py 1.x returns travel_time as integer minutes already
+    car_times["car_minutes"] = pd.to_numeric(car_times["car_time"], errors="coerce")
     print(f"    Car trips computed: {len(car_times)}")
 
     # --- Compute TRANSIT + WALK travel times ---
@@ -141,7 +144,7 @@ def run_scenario_fast(
         modes=[r5py.TransportMode.TRANSIT, r5py.TransportMode.WALK],
     )
     transit_times = transit_times.rename(columns={"travel_time": "transit_time"})
-    transit_times["transit_minutes"] = transit_times["transit_time"].dt.total_seconds() / 60
+    transit_times["transit_minutes"] = pd.to_numeric(transit_times["transit_time"], errors="coerce")
     print(f"    Transit trips computed: {len(transit_times)}")
 
     # --- Optionally compute BICYCLE travel times ---
@@ -153,7 +156,7 @@ def run_scenario_fast(
             modes=[r5py.TransportMode.BICYCLE],
         )
         bike_times = bike_times.rename(columns={"travel_time": "bike_time"})
-        bike_times["bike_minutes"] = bike_times["bike_time"].dt.total_seconds() / 60
+        bike_times["bike_minutes"] = pd.to_numeric(bike_times["bike_time"], errors="coerce")
         print(f"    Bike trips computed: {len(bike_times)}")
 
     # --- Merge and determine mode choice ---

@@ -23,6 +23,20 @@ from analysis.config import (
 )
 
 
+def extract_coords(geometry) -> list:
+    """Extract coordinate list from LineString or MultiLineString geometry."""
+    if geometry is None or geometry.is_empty:
+        return []
+    if geometry.geom_type == "LineString":
+        return list(geometry.coords)
+    if geometry.geom_type == "MultiLineString":
+        coords = []
+        for part in geometry.geoms:
+            coords.extend(list(part.coords))
+        return coords
+    return []
+
+
 def simplify_path(coords: list, tolerance: float = 0.0001) -> list:
     """
     Simplify a coordinate path using Douglas-Peucker algorithm.
@@ -84,9 +98,9 @@ def export_trips(
             # Extract path geometry
             path_coords = []
             for _, leg in group.iterrows():
-                if leg.geometry is not None and not leg.geometry.is_empty:
-                    coords = list(leg.geometry.coords)
-                    path_coords.extend([[round(c[0], 6), round(c[1], 6)] for c in coords])
+                raw = extract_coords(leg.geometry)
+                if raw:
+                    path_coords.extend([[round(c[0], 6), round(c[1], 6)] for c in raw])
 
             if not path_coords:
                 continue
@@ -123,9 +137,9 @@ def export_trips(
 
             path_coords = []
             for _, leg in group.iterrows():
-                if leg.geometry is not None and not leg.geometry.is_empty:
-                    coords = list(leg.geometry.coords)
-                    path_coords.extend([[round(c[0], 6), round(c[1], 6)] for c in coords])
+                raw = extract_coords(leg.geometry)
+                if raw:
+                    path_coords.extend([[round(c[0], 6), round(c[1], 6)] for c in raw])
 
             if not path_coords:
                 continue
@@ -162,9 +176,9 @@ def export_trips(
 
             path_coords = []
             for _, leg in group.iterrows():
-                if leg.geometry is not None and not leg.geometry.is_empty:
-                    coords = list(leg.geometry.coords)
-                    path_coords.extend([[round(c[0], 6), round(c[1], 6)] for c in coords])
+                raw = extract_coords(leg.geometry)
+                if raw:
+                    path_coords.extend([[round(c[0], 6), round(c[1], 6)] for c in raw])
 
             if not path_coords:
                 continue

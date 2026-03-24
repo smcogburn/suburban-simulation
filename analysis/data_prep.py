@@ -95,7 +95,9 @@ def extract_buildings():
         levels = row.get("building:levels", None)
         if levels is not None:
             try:
-                return float(levels) * 3.0
+                h = float(levels) * 3.0
+                if np.isfinite(h):
+                    return h
             except (ValueError, TypeError):
                 pass
         return 9.0  # Default 3 stories
@@ -173,6 +175,8 @@ def extract_roads():
             try:
                 speed_val = float(str(maxspeed).replace(" mph", "").replace(" km/h", ""))
                 speed_kmh = speed_val if "km/h" in str(maxspeed) else speed_val * 1.60934
+                if np.isnan(speed_kmh):
+                    speed_kmh = 50.0
             except (ValueError, TypeError):
                 speed_kmh = 50.0
         else:

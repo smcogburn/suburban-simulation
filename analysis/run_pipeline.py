@@ -88,6 +88,19 @@ def run_pipeline(
         print(f"STEP 3: Running scenario: {scenario_name}")
         print("=" * 60)
 
+        # Check that the scenario's required files exist before trying to run
+        scenario_cfg = SCENARIOS[scenario_name]
+        osm_pbf = scenario_cfg["osm_pbf"]
+        gtfs_dir = scenario_cfg["gtfs_dir"]
+        if not osm_pbf.exists():
+            print(f"  SKIPPING: OSM PBF not found at {osm_pbf}")
+            print(f"  Run scenario_builder.py (Policy B) to create it.")
+            continue
+        if not gtfs_dir.exists() or not any(gtfs_dir.iterdir()):
+            print(f"  SKIPPING: GTFS directory empty or missing: {gtfs_dir}")
+            print(f"  Run scenario_builder.py (Policy A) to create doubled GTFS.")
+            continue
+
         # Fast pass: TravelTimeMatrix for mode-share statistics
         fast_results = run_scenario_fast(scenario_name, origins_gdf, destinations_gdf)
         all_stats[scenario_name] = fast_results["stats"]
