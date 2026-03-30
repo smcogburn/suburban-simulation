@@ -5,9 +5,9 @@
 import * as THREE from 'three';
 import { OrbitControls } from '../lib/OrbitControls.js';
 
-// Annapolis downtown center
-const CENTER_LNG = -76.492;
-const CENTER_LAT = 38.978;
+// Corridor center (Bowie→Annapolis midpoint)
+const CENTER_LNG = -76.66;
+const CENTER_LAT = 38.985;
 const SCALE = 100000;
 
 /**
@@ -32,16 +32,16 @@ export class SceneManager {
 
         // Scene
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2(0x0a0a14, 0.00008);
+        this.scene.fog = new THREE.FogExp2(0x0a0a14, 0.00002);
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(
             55,
             window.innerWidth / window.innerHeight,
             1,
-            50000
+            200000
         );
-        this.camera.position.set(0, 2800, 1800);
+        this.camera.position.set(0, 12000, 8000);
         this.camera.lookAt(0, 0, 0);
 
         // Controls
@@ -49,7 +49,7 @@ export class SceneManager {
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.08;
         this.controls.minDistance = 200;
-        this.controls.maxDistance = 12000;
+        this.controls.maxDistance = 60000;
         this.controls.maxPolarAngle = Math.PI / 2.1;
         this.controls.target.set(0, 0, 0);
 
@@ -62,7 +62,7 @@ export class SceneManager {
         this.scene.add(dirLight);
 
         // Ground plane
-        const groundGeo = new THREE.PlaneGeometry(20000, 20000);
+        const groundGeo = new THREE.PlaneGeometry(120000, 120000);
         const groundMat = new THREE.MeshBasicMaterial({ color: 0x0d0d1a });
         const ground = new THREE.Mesh(groundGeo, groundMat);
         ground.rotation.x = -Math.PI / 2;

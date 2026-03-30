@@ -20,6 +20,9 @@ from analysis.config import (
     VIZ_BBOX,
     NUM_ORIGINS,
     NUM_DESTINATIONS,
+    NUM_REGIONAL_DESTINATIONS,
+    NUM_LOCAL_DESTINATIONS,
+    LOCAL_TRIP_RADIUS_KM,
     DEPARTURE_DATE,
     DEPARTURE_SLOTS,
     VIZ_TRIP_SUBSET,
@@ -75,55 +78,92 @@ def get_residential_origins(num_origins: int = NUM_ORIGINS) -> gpd.GeoDataFrame:
     return origins
 
 
-def get_destinations(num_destinations: int = NUM_DESTINATIONS) -> gpd.GeoDataFrame:
+def get_destinations() -> gpd.GeoDataFrame:
     """
-    Sample commercial/employment destinations from OSM.
-    Uses ANALYSIS_BBOX (full corridor) for realistic suburban destinations.
-    Falls back to manually defined Annapolis-area destinations if OSM data is sparse.
+    Sample destinations from OSM in two pools, tagged by type:
+
+    - "regional" (NUM_REGIONAL_DESTINATIONS): major employment/commercial across
+      the full corridor. Every origin is paired with every regional destination
+      (commute trips — expected to be long, car-dominant, realistic).
+
+    - "local" (NUM_LOCAL_DESTINATIONS): grocery stores, schools, pharmacies, cafes
+      sampled corridor-wide. In create_od_matrix(), each origin is only paired with
+      local destinations within LOCAL_TRIP_RADIUS_KM — ensuring local trips are
+      actually short and bike/walk-competitive.
+
+    Returns GeoDataFrame with columns: id, type, geometry.
     """
     bbox = ANALYSIS_BBOX
-    print(f"Generating {num_destinations} destination points...")
+    print(f"Generating destinations ({NUM_REGIONAL_DESTINATIONS} regional + up to {NUM_LOCAL_DESTINATIONS} local POIs)...")
 
+    regional_geoms = []
+    local_geoms = []
+
+    # --- Pool 1: Regional destinations (employment/commercial) ---
     try:
-        # Get commercial/office buildings and amenities
-        commercial = ox.features_from_bbox(
+        regional = ox.features_from_bbox(
             bbox=(bbox["west"], bbox["south"], bbox["east"], bbox["north"]),
             tags={
                 "building": ["commercial", "office", "retail", "industrial"],
-                "amenity": ["school", "hospital", "university", "marketplace"],
-                "shop": True,
+                "amenity": ["hospital", "university", "marketplace"],
             },
         )
+        regional_centroids = regional.to_crs(epsg=3857).geometry.centroid.to_crs("EPSG:4326")
+        if regional_centroids.crs is None:
+            regional_centroids = regional_centroids.set_crs("EPSG:4326")
 
-        # Get centroids in projected CRS to avoid warning, then back to WGS84
-        centroids = commercial.to_crs(epsg=3857).geometry.centroid.to_crs("EPSG:4326")
-        # Make sure they're points in WGS84
-        if centroids.crs is None:
-            centroids = centroids.set_crs("EPSG:4326")
-
-        print(f"  Found {len(centroids)} commercial/amenity features in OSM")
-
-        if len(centroids) >= num_destinations:
-            # Random sample
-            indices = np.random.default_rng(42).choice(
-                len(centroids), num_destinations, replace=False
-            )
-            centroids = centroids.iloc[indices]
-        else:
-            print(f"  Using all {len(centroids)} available features")
+        n_regional = min(NUM_REGIONAL_DESTINATIONS, len(regional_centroids))
+        idx = np.random.default_rng(42).choice(len(regional_centroids), n_regional, replace=False)
+        regional_centroids = regional_centroids.iloc[idx]
+        regional_geoms = list(regional_centroids.values)
+        print(f"  Regional destinations: {len(regional_geoms)} sampled from {len(regional_centroids)} candidates")
 
     except Exception as e:
-        print(f"  Warning: Could not get destinations from OSM: {e}")
-        print(f"  Using manually defined Columbia-area destinations")
-        centroids = _fallback_destinations()
+        print(f"  Warning: Could not get regional destinations: {e}")
 
-    destinations = gpd.GeoDataFrame(
-        {"id": [f"dest_{i}" for i in range(len(centroids))]},
-        geometry=centroids.values,
-        crs="EPSG:4326",
-    )
+    # --- Pool 2: Local amenities (grocery, school, pharmacy, cafe) ---
+    # Sample corridor-wide — proximity filtering happens in create_od_matrix()
+    try:
+        local = ox.features_from_bbox(
+            bbox=(bbox["west"], bbox["south"], bbox["east"], bbox["north"]),
+            tags={
+                "shop": ["supermarket", "convenience", "department_store", "grocery"],
+                "amenity": ["school", "pharmacy", "restaurant", "cafe", "library", "community_centre"],
+            },
+        )
+        local_centroids = local.to_crs(epsg=3857).geometry.centroid.to_crs("EPSG:4326")
+        if local_centroids.crs is None:
+            local_centroids = local_centroids.set_crs("EPSG:4326")
+
+        n_local = min(NUM_LOCAL_DESTINATIONS, len(local_centroids))
+        idx = np.random.default_rng(43).choice(len(local_centroids), n_local, replace=False)
+        local_centroids = local_centroids.iloc[idx]
+        local_geoms = list(local_centroids.values)
+        print(f"  Local POIs: {len(local_geoms)} sampled corridor-wide (proximity-filtered per origin at {LOCAL_TRIP_RADIUS_KM} km)")
+
+    except Exception as e:
+        print(f"  Warning: Could not get local destinations: {e}")
+
+    # --- Combine with type tags ---
+    if not regional_geoms and not local_geoms:
+        print("  Falling back to manually defined destinations")
+        fallback = _fallback_destinations()
+        destinations = gpd.GeoDataFrame(
+            {"id": [f"dest_{i}" for i in range(len(fallback))], "type": "regional"},
+            geometry=fallback.values,
+            crs="EPSG:4326",
+        )
+        return destinations
+
+    rows = []
+    for i, geom in enumerate(regional_geoms):
+        rows.append({"id": f"regional_{i}", "type": "regional", "geometry": geom})
+    for i, geom in enumerate(local_geoms):
+        rows.append({"id": f"local_{i}", "type": "local", "geometry": geom})
+
+    destinations = gpd.GeoDataFrame(rows, crs="EPSG:4326")
     destinations = destinations.reset_index(drop=True)
-    print(f"  Generated {len(destinations)} destinations")
+    print(f"  Total destination pool: {len(destinations)} ({len(regional_geoms)} regional + {len(local_geoms)} local)")
     return destinations
 
 
@@ -162,42 +202,81 @@ def create_od_matrix(
     seed: int = 42,
 ) -> pd.DataFrame:
     """
-    Create all origin-destination pairs with assigned departure times.
-    Each OD pair gets a random departure slot from the morning rush period.
+    Create OD pairs with proximity-aware logic:
+
+    - Regional destinations: every origin → every regional destination (commute trips).
+      These are long-distance by design — realistic suburban commutes, car-dominant.
+
+    - Local destinations: each origin → only local destinations within
+      LOCAL_TRIP_RADIUS_KM. This ensures local trips (grocery, school, pharmacy)
+      are actually walkable/bikeable distances.
 
     Returns DataFrame with columns:
-        from_id, to_id, from_geometry, to_geometry, departure_time, departure_seconds
+        from_id, to_id, trip_type, from_geometry, to_geometry,
+        departure_time, departure_seconds
     """
-    print("Creating OD matrix...")
+    print("Creating proximity-aware OD matrix...")
+
+    # Project to meters for distance calculation (UTM zone 18N covers Maryland)
+    UTM = "EPSG:32618"
+    origins_proj = origins.to_crs(UTM)
+    destinations_proj = destinations.to_crs(UTM)
+    radius_m = LOCAL_TRIP_RADIUS_KM * 1000
+
+    regional_mask = destinations["type"] == "regional"
+    local_mask = destinations["type"] == "local"
+    regional_dests = destinations[regional_mask].reset_index(drop=True)
+    local_dests = destinations[local_mask].reset_index(drop=True)
+    local_dests_proj = destinations_proj[local_mask].reset_index(drop=True)
+
+    print(f"  Regional dests: {len(regional_dests)}, Local POI pool: {len(local_dests)}")
 
     rng = np.random.default_rng(seed)
     rows = []
 
-    for _, origin in origins.iterrows():
-        for _, dest in destinations.iterrows():
-            # Assign a random departure slot
-            slot = DEPARTURE_SLOTS[rng.integers(0, len(DEPARTURE_SLOTS))]
-            departure_dt = pd.Timestamp.combine(DEPARTURE_DATE, slot)
+    def _make_row(origin, dest, trip_type):
+        slot = DEPARTURE_SLOTS[rng.integers(0, len(DEPARTURE_SLOTS))]
+        departure_dt = pd.Timestamp.combine(DEPARTURE_DATE, slot)
+        seconds_since_7am = (slot.hour - 7) * 3600 + slot.minute * 60
+        return {
+            "from_id": origin["id"],
+            "to_id": dest["id"],
+            "trip_type": trip_type,
+            "from_geometry": origin.geometry,
+            "to_geometry": dest.geometry,
+            "departure_time": departure_dt,
+            "departure_seconds": seconds_since_7am,
+        }
 
-            # Seconds since 7:00 AM (for the visualization time system)
-            seconds_since_7am = (slot.hour - 7) * 3600 + slot.minute * 60
+    local_counts = []
+    for i, (_, origin) in enumerate(origins.iterrows()):
+        origin_proj = origins_proj.iloc[i]
 
-            rows.append({
-                "from_id": origin["id"],
-                "to_id": dest["id"],
-                "from_geometry": origin.geometry,
-                "to_geometry": dest.geometry,
-                "departure_time": departure_dt,
-                "departure_seconds": seconds_since_7am,
-            })
+        # Commute: every origin → every regional destination
+        for _, dest in regional_dests.iterrows():
+            rows.append(_make_row(origin, dest, "commute"))
+
+        # Local: only destinations within radius
+        n_local = 0
+        for j, (_, local_dest) in enumerate(local_dests.iterrows()):
+            dist = origin_proj.geometry.distance(local_dests_proj.iloc[j].geometry)
+            if dist <= radius_m:
+                rows.append(_make_row(origin, local_dest, "local"))
+                n_local += 1
+        local_counts.append(n_local)
 
     od_matrix = pd.DataFrame(rows)
-    print(f"  Created {len(od_matrix)} OD pairs")
+
+    commute_count = (od_matrix["trip_type"] == "commute").sum()
+    local_count = (od_matrix["trip_type"] == "local").sum()
+    print(f"  Total OD pairs: {len(od_matrix)} ({commute_count} commute + {local_count} local)")
+    print(f"  Local trips per origin — avg: {np.mean(local_counts):.1f}, "
+          f"min: {min(local_counts)}, max: {max(local_counts)}")
+
+    slot_counts = od_matrix["departure_time"].dt.time.value_counts().sort_index()
     print(f"  Departure time distribution:")
-    for slot in DEPARTURE_SLOTS:
-        count = sum(1 for _, r in od_matrix.iterrows()
-                    if r["departure_time"].time() == slot)
-        print(f"    {slot.strftime('%H:%M')}: {count} trips")
+    for slot_time, count in slot_counts.items():
+        print(f"    {slot_time.strftime('%H:%M')}: {count} trips")
 
     return od_matrix
 

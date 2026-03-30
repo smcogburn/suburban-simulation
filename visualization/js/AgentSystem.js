@@ -32,6 +32,11 @@ function makeCircleTexture(size = 64) {
     return new THREE.CanvasTexture(canvas);
 }
 
+// Filter: only show trips with ≥5% of waypoints inside this bbox.
+// Update these bounds after expanding VIZ_BBOX in config.py + pipeline rerun.
+const VIZ_BBOX = { w: -76.90, e: -76.42, s: 38.87, n: 39.10 };
+const MIN_IN_BOX = 0.05;
+
 export class AgentSystem {
     constructor() {
         this.trips = [];
@@ -40,6 +45,9 @@ export class AgentSystem {
         this._positions = null;
         this._colors = null;
         this._maxAgents = 0;
+        this._activeCount = 0;
+        this._activeCounts = { CAR: 0, TRANSIT: 0, BICYCLE: 0, WALK: 0 };
+        this._modeFilter = null; // null = show all; string = show only that mode
         this._initEmpty();
     }
 
@@ -61,10 +69,22 @@ export class AgentSystem {
     }
 
     /**
-     * Load trip data for a scenario. Replaces any existing trips.
+     * Load trip data for a scenario. Filters to trips within VIZ_BBOX.
      */
     loadTrips(tripsData) {
-        this.trips = tripsData.trips;
+        const all = tripsData.trips;
+        this.trips = all.filter(trip => {
+            // Require at least 3 waypoints — 2-point trips are routing failures
+            // (r5py returned a straight origin→destination line with no road geometry)
+            if (!trip.path || trip.path.length < 3) return false;
+            let inBox = 0;
+            for (const [lng, lat] of trip.path) {
+                if (lng >= VIZ_BBOX.w && lng <= VIZ_BBOX.e &&
+                    lat >= VIZ_BBOX.s && lat <= VIZ_BBOX.n) inBox++;
+            }
+            return inBox / trip.path.length >= MIN_IN_BOX;
+        });
+        console.log(`AgentSystem: showing ${this.trips.length} / ${all.length} trips within scene bounds`);
         this._maxAgents = this.trips.length;
         this._preparePaths();
         this._buildGeometry();
@@ -137,6 +157,18 @@ export class AgentSystem {
         return this._points;
     }
 
+    /** Returns how many agents are currently moving (total). */
+    getActiveCount() { return this._activeCount; }
+
+    /** Returns per-mode live counts: { CAR, TRANSIT, BICYCLE, WALK } */
+    getActiveCounts() { return this._activeCounts; }
+
+    /**
+     * Set an x-ray filter. Pass a mode string (e.g. "BICYCLE") to show only
+     * that mode; pass null to show all modes.
+     */
+    setModeFilter(mode) { this._modeFilter = mode; }
+
     /**
      * Update agent positions for the given simulation time (seconds since 7AM).
      */
@@ -145,13 +177,16 @@ export class AgentSystem {
 
         const posAttr = this._points.geometry.getAttribute('position');
         const colAttr = this._points.geometry.getAttribute('color');
+        this._activeCount = 0;
+        this._activeCounts = { CAR: 0, TRANSIT: 0, BICYCLE: 0, WALK: 0 };
 
         for (let i = 0; i < this.trips.length; i++) {
             const trip = this.trips[i];
             const elapsed = simTime - trip.departure;
+            const active = elapsed >= 0 && elapsed <= trip.duration;
+            const visible = active && (!this._modeFilter || trip.mode === this._modeFilter);
 
-            if (elapsed < 0 || elapsed > trip.duration) {
-                // Hidden
+            if (!visible) {
                 posAttr.array[i * 3]     = HIDDEN.x;
                 posAttr.array[i * 3 + 1] = HIDDEN.y;
                 posAttr.array[i * 3 + 2] = HIDDEN.z;
@@ -159,13 +194,19 @@ export class AgentSystem {
                 const t = trip.duration > 0 ? elapsed / trip.duration : 0;
                 const [x, z] = this._interpolatePath(i, t);
                 posAttr.array[i * 3]     = x;
-                posAttr.array[i * 3 + 1] = 8; // slightly above roads
+                posAttr.array[i * 3 + 1] = 8;
                 posAttr.array[i * 3 + 2] = z;
 
                 const color = MODE_COLORS[trip.mode] || MODE_COLORS.CAR;
                 colAttr.array[i * 3]     = color.r;
                 colAttr.array[i * 3 + 1] = color.g;
                 colAttr.array[i * 3 + 2] = color.b;
+                this._activeCount++;
+            }
+
+            // Count all active trips regardless of filter (for stats display)
+            if (active && this._activeCounts[trip.mode] !== undefined) {
+                this._activeCounts[trip.mode]++;
             }
         }
 

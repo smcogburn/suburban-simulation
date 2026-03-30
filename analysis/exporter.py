@@ -75,14 +75,6 @@ def export_trips(
     # Process car itineraries
     if car_itineraries is not None and len(car_itineraries) > 0:
         for (from_id, to_id), group in car_itineraries.groupby(["from_id", "to_id"]):
-            # Get the total travel time
-            total_time = group["travel_time"].sum()
-            if pd.isna(total_time):
-                continue
-            duration_sec = total_time.total_seconds()
-            if duration_sec <= 0:
-                continue
-
             # Get departure time from mode_choice_df
             match = mode_choice_df[
                 (mode_choice_df["from_id"] == from_id) &
@@ -93,6 +85,23 @@ def export_trips(
             # Check if this trip's chosen mode is CAR
             chosen = match["chosen_mode"].iloc[0] if len(match) > 0 else "CAR"
             if chosen != "CAR":
+                continue
+
+            # Use BPR-congested duration if available (agents slow down with traffic).
+            # Falls back to raw r5py itinerary time if congestion wasn't computed.
+            congested_min = None
+            if len(match) > 0 and "car_minutes_congested" in match.columns:
+                val = match["car_minutes_congested"].iloc[0]
+                if pd.notna(val) and val > 0:
+                    congested_min = val
+            if congested_min is not None:
+                duration_sec = congested_min * 60
+            else:
+                total_time = group["travel_time"].sum()
+                if pd.isna(total_time):
+                    continue
+                duration_sec = total_time.total_seconds()
+            if duration_sec <= 0:
                 continue
 
             # Extract path geometry

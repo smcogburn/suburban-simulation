@@ -13,7 +13,7 @@ import json
 import sys
 import time
 
-from analysis.config import SCENARIOS, EXPORT_DIR
+from analysis.config import SCENARIOS, EXPORT_DIR, TIME_WINDOWS
 from analysis.data_prep import extract_buildings, extract_roads
 from analysis.od_generation import (
     get_residential_origins,
@@ -35,6 +35,8 @@ def run_pipeline(
     scenarios: list = None,
     skip_detailed: bool = False,
     prep_only: bool = False,
+    force_prep: bool = False,
+    diag_only: bool = False,
 ):
     """Run the full analysis pipeline."""
     start_time = time.time()
@@ -47,17 +49,27 @@ def run_pipeline(
     print("=" * 60)
     print(f"Scenarios to run: {scenarios}")
     print(f"Skip DetailedItineraries: {skip_detailed}")
+    if diag_only:
+        print("DIAG MODE: Will stop after fast-pass routing diagnostics (no exports)")
     print()
 
     # ─── Step 1: Extract buildings and roads for visualization ───
+    buildings_json_path = EXPORT_DIR / "buildings.json"
+    roads_json_path = EXPORT_DIR / "roads.json"
+    files_exist = buildings_json_path.exists() and roads_json_path.exists()
+
     print("\n" + "=" * 60)
-    print("STEP 1: Extracting buildings and roads")
+    print("STEP 1: Buildings and roads")
     print("=" * 60)
-    buildings = extract_buildings()
-    roads_data = extract_roads()
+    if files_exist and not force_prep:
+        print(f"  buildings.json and roads.json already exist — skipping extraction.")
+        print(f"  (Run with --force-prep to re-extract.)")
+        buildings = None  # not needed downstream
+    else:
+        buildings = extract_buildings()
+        roads_data = extract_roads()
 
     # Load roads.json for congestion analysis
-    roads_json_path = EXPORT_DIR / "roads.json"
     with open(roads_json_path, "r") as f:
         roads_json = json.load(f)
 
@@ -105,6 +117,10 @@ def run_pipeline(
         fast_results = run_scenario_fast(scenario_name, origins_gdf, destinations_gdf)
         all_stats[scenario_name] = fast_results["stats"]
 
+        if diag_only:
+            print(f"\n  [--diag-only] Stopping after fast pass for {scenario_name}. No exports written.")
+            continue
+
         # Congestion analysis (using the fast-pass mode choice data)
         print(f"\n  Running congestion analysis for {scenario_name}...")
 
@@ -114,17 +130,33 @@ def run_pipeline(
         # The detailed pass (if run) will give us actual geometries.
 
         if not skip_detailed:
-            # Slow pass: DetailedItineraries for viz subset
-            print(f"\n  Running DetailedItineraries for viz subset...")
+            # Slow pass: DetailedItineraries for a small fixed origin sample.
+            #
+            # IMPORTANT: r5py DetailedItineraries computes ALL M×N pairs.
+            # Passing 500 unique origins × 30 destinations = 15,000 routes × 3 modes
+            # = 45,000 geometry objects → fills all RAM and crashes.
+            #
+            # Instead: sample VIZ_DET_ORIGINS origins, route to ALL destinations.
+            # 20 × 30 = 600 pairs per mode — large enough for a good visualization,
+            # small enough to fit in memory.
+            import numpy as np
+            VIZ_DET_ORIGINS = 20
+            rng_det = np.random.default_rng(42)
+            det_ids = rng_det.choice(
+                origins_gdf["id"].values,
+                size=min(VIZ_DET_ORIGINS, len(origins_gdf)),
+                replace=False,
+            )
+            viz_origins = origins_gdf[origins_gdf["id"].isin(det_ids)]
+            viz_destinations = destinations_gdf  # all destinations
 
-            # Create subset GeoDataFrames
-            viz_from_ids = viz_subset["from_id"].unique()
-            viz_to_ids = viz_subset["to_id"].unique()
-            viz_origins = origins_gdf[origins_gdf["id"].isin(viz_from_ids)]
-            viz_destinations = destinations_gdf[destinations_gdf["id"].isin(viz_to_ids)]
+            print(f"\n  Running DetailedItineraries for {len(viz_origins)} origins × "
+                  f"{len(viz_destinations)} destinations = "
+                  f"{len(viz_origins) * len(viz_destinations)} pairs per mode...")
 
             detailed_results = run_scenario_detailed(
-                scenario_name, viz_origins, viz_destinations
+                scenario_name, viz_origins, viz_destinations,
+                network=fast_results.get("network"),
             )
 
             # Compute congestion from car itineraries
@@ -132,17 +164,22 @@ def run_pipeline(
             if car_itin is not None and len(car_itin) > 0:
                 car_geoms = car_itin[car_itin.geometry.notna()]
                 if len(car_geoms) > 0:
-                    dep_seconds = viz_subset.set_index(["from_id", "to_id"])
-                    # Create departure_seconds series aligned with car_geoms
+                    # Look up departure seconds from full od_matrix (not viz_subset,
+                    # since detailed origins may differ from viz_subset origins)
+                    dep_lookup = od_matrix.set_index(["from_id", "to_id"])["departure_seconds"]
                     dep_sec_series = car_geoms.apply(
-                        lambda row: dep_seconds.loc[
-                            (row["from_id"], row["to_id"]), "departure_seconds"
-                        ] if (row["from_id"], row["to_id"]) in dep_seconds.index else 3600,
+                        lambda row: dep_lookup.get((row["from_id"], row["to_id"]), 3600),
                         axis=1,
                     )
 
+                    # Extract trip durations (travel_time is timedelta in DetailedItineraries)
+                    if "travel_time" in car_geoms.columns:
+                        dur_sec_series = car_geoms["travel_time"].dt.total_seconds()
+                    else:
+                        dur_sec_series = None
+
                     segment_counts = assign_trips_to_segments(
-                        car_geoms, roads_json, dep_sec_series
+                        car_geoms, roads_json, dep_sec_series, dur_sec_series
                     )
                     congestion_ratios = compute_congestion_ratios(segment_counts, roads_json)
                 else:
@@ -164,7 +201,7 @@ def run_pipeline(
             # Export trips for visualization
             # Add departure_seconds to the mode choice df
             merged_with_dep = adjusted_df.merge(
-                viz_subset[["from_id", "to_id", "departure_seconds"]],
+                od_matrix[["from_id", "to_id", "departure_seconds"]],
                 on=["from_id", "to_id"],
                 how="left",
             )
@@ -181,7 +218,7 @@ def run_pipeline(
         else:
             # Export empty congestion (all free-flow)
             congestion_ratios = {
-                seg["id"]: [1.0] * 5 for seg in roads_json["segments"]
+                seg["id"]: [1.0] * len(TIME_WINDOWS) for seg in roads_json["segments"]
             }
             export_congestion(scenario_name, congestion_ratios)
 
@@ -210,6 +247,11 @@ def main():
                         help="Skip DetailedItineraries (faster, no viz paths)")
     parser.add_argument("--prep-only", action="store_true",
                         help="Only run data preparation, no routing")
+    parser.add_argument("--force-prep", action="store_true",
+                        help="Re-extract buildings/roads even if files already exist")
+    parser.add_argument("--diag-only", action="store_true",
+                        help="Run fast-pass routing and print diagnostics only — no DetailedItineraries, no exports. "
+                             "Use to quickly validate transit/bike coverage and time gaps.")
     args = parser.parse_args()
 
     scenarios = [args.scenario] if args.scenario else None
@@ -217,6 +259,8 @@ def main():
         scenarios=scenarios,
         skip_detailed=args.skip_detailed,
         prep_only=args.prep_only,
+        force_prep=args.force_prep,
+        diag_only=args.diag_only,
     )
 
 

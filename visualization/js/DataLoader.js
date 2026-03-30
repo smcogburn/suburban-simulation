@@ -35,6 +35,10 @@ export async function loadCongestion(scenario) {
     return loadJSON(`congestion_${scenario}.json`);
 }
 
+export async function loadTransitRoutes() {
+    return loadJSON('transit_routes.json');
+}
+
 export async function preloadAll(scenarios = ['baseline']) {
     const tasks = [loadBuildings(), loadRoads(), loadMetadata()];
     for (const s of scenarios) {

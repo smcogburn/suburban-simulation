@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(.venv/Scripts/python.exe -c \"import r5py; print\\(''r5py ok''\\)\")",
+      "Bash(.venv/Scripts/python.exe -m analysis.run_pipeline --scenario baseline --skip-detailed)"
+    ]
+  }
+}

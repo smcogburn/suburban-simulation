@@ -22,26 +22,44 @@
 <!-- Stats panel (top-left) -->
 <div id="stats-panel">
     <div id="stats-title">Mode Share</div>
-    <div class="stat-row">
+    <div class="stat-row" data-mode="CAR">
         <div class="stat-dot" style="background:#ff4444"></div>
+        <div class="stat-label">Car</div>
         <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-car" style="background:#ff4444;width:100%"></div></div>
         <div class="stat-pct" id="pct-car">—</div>
+        <div class="stat-live" id="live-car"></div>
     </div>
-    <div class="stat-row">
+    <div class="stat-row" data-mode="TRANSIT">
         <div class="stat-dot" style="background:#4488ff"></div>
+        <div class="stat-label">Transit</div>
         <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-transit" style="background:#4488ff;width:0%"></div></div>
         <div class="stat-pct" id="pct-transit">—</div>
+        <div class="stat-live" id="live-transit"></div>
     </div>
-    <div class="stat-row">
+    <div class="stat-row" data-mode="BICYCLE">
         <div class="stat-dot" style="background:#44ff88"></div>
+        <div class="stat-label">Bike</div>
         <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-bike" style="background:#44ff88;width:0%"></div></div>
         <div class="stat-pct" id="pct-bike">—</div>
+        <div class="stat-live" id="live-bike"></div>
     </div>
-    <div class="stat-row">
+    <div class="stat-row" data-mode="WALK">
         <div class="stat-dot" style="background:#ffcc00"></div>
+        <div class="stat-label">Walk</div>
         <div class="stat-bar-bg"><div class="stat-bar-fill" id="bar-walk" style="background:#ffcc00;width:0%"></div></div>
         <div class="stat-pct" id="pct-walk">—</div>
+        <div class="stat-live" id="live-walk"></div>
     </div>
+    <div id="trip-counter">● — active</div>
+</div>
+
+<!-- Neighborhood labels overlay -->
+<div id="labels-container">
+    <div class="area-label" id="label-downtown">Downtown Annapolis</div>
+    <div class="area-label" id="label-eastport">Eastport</div>
+    <div class="area-label" id="label-naval">Naval Academy</div>
+    <div class="area-label" id="label-spacreek">Spa Creek</div>
+    <div class="area-label" id="label-west">West Annapolis</div>
 </div>
 
 <!-- Scenario panel (top-right) -->

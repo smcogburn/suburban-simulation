@@ -6,34 +6,43 @@ import * as THREE from 'three';
 import { mergeGeometries } from '../lib/BufferGeometryUtils.js';
 import { project } from './SceneManager.js';
 
-const BUILDING_COLOR = 0x2a2a3e;
-const BUILDING_EMISSIVE = 0x111120;
+const BUILDING_COLOR    = 0x3d3d5c; // raised from 0x2a2a3e for better contrast
+const BUILDING_EMISSIVE = 0x151528; // faint window-glow
+
+// Height variation table for untagged buildings (height === 9).
+// Seeded by building coordinates so heights are stable across reloads.
+const HEIGHT_VARIATION = [3, 6, 9, 12, 15, 9, 6, 18, 9, 6];
+
+function buildingHeight(feature) {
+    const h = feature.height;
+    if (!h || h === 9) {
+        // Untagged — pick a variation based on location
+        const lng = feature.coords[0][0];
+        const lat = feature.coords[0][1];
+        const idx = Math.abs(Math.floor(lng * 1000 + lat * 1000)) % HEIGHT_VARIATION.length;
+        return HEIGHT_VARIATION[idx];
+    }
+    return h;
+}
 
 export function buildBuildingMesh(buildingsData) {
     const geometries = [];
 
     for (const feature of buildingsData.features) {
         const coords = feature.coords;
-        const height = feature.height || 9;
+        const height = buildingHeight(feature);
 
-        // Build a THREE.Shape from the footprint polygon
         const shape = new THREE.Shape();
         const [x0, z0] = project(coords[0][0], coords[0][1]);
-        shape.moveTo(x0, -z0); // negate z: after rotateX(-π/2), shape.y → -world.z
+        shape.moveTo(x0, -z0);
         for (let i = 1; i < coords.length; i++) {
             const [x, z] = project(coords[i][0], coords[i][1]);
             shape.lineTo(x, -z);
         }
         shape.closePath();
 
-        const extrudeSettings = {
-            depth: height,
-            bevelEnabled: false,
-        };
-
         try {
-            const geo = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-            // ExtrudeGeometry extrudes along Z; rotate so extrusion goes up (Y)
+            const geo = new THREE.ExtrudeGeometry(shape, { depth: height, bevelEnabled: false });
             geo.rotateX(-Math.PI / 2);
             geometries.push(geo);
         } catch {
@@ -41,9 +50,7 @@ export function buildBuildingMesh(buildingsData) {
         }
     }
 
-    if (geometries.length === 0) {
-        return null;
-    }
+    if (geometries.length === 0) return null;
 
     const merged = mergeGeometries(geometries, false);
     geometries.forEach(g => g.dispose());

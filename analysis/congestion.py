@@ -19,6 +19,7 @@ from shapely.ops import nearest_points
 from analysis.config import (
     BPR_ALPHA,
     BPR_BETA,
+    MODE_CHOICE,
     TIME_WINDOWS,
     TRIP_SCALE_FACTOR,
     EXPORT_DIR,
@@ -29,15 +30,22 @@ def assign_trips_to_segments(
     trip_geometries: gpd.GeoDataFrame,
     road_segments: dict,
     departure_seconds: pd.Series,
+    duration_seconds: pd.Series = None,
 ) -> dict:
     """
     Map each car trip to the road segments it traverses and count trips
     per segment per time window.
 
+    Each trip is spread proportionally across all time windows it spans
+    (departure → departure + duration), not just the departure window.
+    This prevents the "spike at departure, nothing after" artifact.
+
     Args:
         trip_geometries: GeoDataFrame with trip LineString geometry
         road_segments: dict from roads.json (loaded road network)
         departure_seconds: Series of departure times (seconds since 7AM)
+        duration_seconds: Series of trip durations in seconds (optional).
+            If None, each trip is assumed to last one full window (1800s).
 
     Returns:
         dict mapping segment_id -> list of 5 trip counts (one per time window)
@@ -65,20 +73,32 @@ def assign_trips_to_segments(
     roads_buffered = roads_proj.set_geometry("geometry_buffered")
 
     # Count trips per segment per time window
-    # Initialize: segment_id -> [0, 0, 0, 0, 0] for 5 time windows
-    segment_counts = defaultdict(lambda: [0] * len(TIME_WINDOWS))
+    segment_counts = defaultdict(lambda: [0.0] * len(TIME_WINDOWS))
 
     for trip_idx, trip_row in trip_geometries.iterrows():
         if trip_row.geometry is None or trip_row.geometry.is_empty:
             continue
 
-        # Find which time window this trip falls in
-        dep_sec = departure_seconds.iloc[trip_idx] if trip_idx < len(departure_seconds) else 3600
-        window_idx = 0
-        for i, tw in enumerate(TIME_WINDOWS):
-            if tw["start"] <= dep_sec < tw["end"]:
-                window_idx = i
-                break
+        dep_sec = float(departure_seconds.iloc[trip_idx]) if trip_idx < len(departure_seconds) else 3600.0
+        if duration_seconds is not None and trip_idx < len(duration_seconds):
+            dur_sec = float(duration_seconds.iloc[trip_idx])
+            # Guard against zero/NaN duration
+            if not (dur_sec > 0):
+                dur_sec = 1800.0
+        else:
+            dur_sec = 1800.0  # fallback: assume one full window
+
+        arr_sec = dep_sec + dur_sec
+
+        # Compute the fraction of this trip that falls in each time window
+        window_weights = []
+        for tw in TIME_WINDOWS:
+            overlap = max(0.0, min(tw["end"], arr_sec) - max(tw["start"], dep_sec))
+            window_weights.append(overlap / dur_sec)
+
+        # Skip if trip doesn't overlap any window (shouldn't happen in normal data)
+        if sum(window_weights) < 1e-6:
+            continue
 
         # Project trip geometry for spatial operations
         trip_proj = gpd.GeoSeries([trip_row.geometry], crs="EPSG:4326").to_crs(epsg=3857).iloc[0]
@@ -87,7 +107,16 @@ def assign_trips_to_segments(
         intersecting = roads_buffered[roads_buffered.geometry_buffered.intersects(trip_proj)]
 
         for _, seg_row in intersecting.iterrows():
-            segment_counts[seg_row["segment_id"]][window_idx] += TRIP_SCALE_FACTOR
+            seg_id = seg_row["segment_id"]
+            for wi, weight in enumerate(window_weights):
+                if weight > 0:
+                    segment_counts[seg_id][wi] += weight * TRIP_SCALE_FACTOR
+
+    # Round counts to integers for BPR computation
+    segment_counts = {
+        seg_id: [round(c) for c in counts]
+        for seg_id, counts in segment_counts.items()
+    }
 
     print(f"    Assigned trips to {len(segment_counts)} road segments")
     return dict(segment_counts)
@@ -109,7 +138,9 @@ def compute_congestion_ratios(
     capacity_lookup = {}
     for seg in road_segments["segments"]:
         # Capacity is per hour, time windows are 30 min -> divide by 2
-        capacity_lookup[seg["id"]] = seg["capacity_per_hour"] / 2.0
+        # Capacity is per hour; scale to window duration
+        window_hours = (TIME_WINDOWS[0]["end"] - TIME_WINDOWS[0]["start"]) / 3600.0
+        capacity_lookup[seg["id"]] = seg["capacity_per_hour"] * window_hours
 
     congestion_ratios = {}
     max_ratio = 0
@@ -148,51 +179,65 @@ def adjust_car_travel_times(
     trip_segments: dict,
 ) -> pd.DataFrame:
     """
-    Adjust car travel times using congestion ratios.
-    Trips on congested roads get their car_minutes multiplied by the congestion ratio.
+    Re-run mode choice using the actual BPR congestion ratio computed from real traffic counts.
 
-    Returns updated DataFrame with adjusted car_minutes and potentially different mode choices.
+    First-pass mode choice used car_bpr_factor=1.0 (free-flow). Now that we know the actual
+    peak congestion ratio from the BPR model, we re-apply the generalized cost formula with
+    the real congestion penalty. Same noise seed → reproducible, but some trips that barely
+    chose CAR in free-flow will now flip to transit/bike.
+
+    Returns updated DataFrame with chosen_mode updated in-place.
     """
     print("  Adjusting car travel times for congestion...")
 
     df = mode_choice_df.copy()
 
-    # For a simplified approach: multiply car time by the average congestion ratio
-    # of the segments the trip uses (approximation since we don't have per-trip segments
-    # in the fast pass - we use a time-window average)
-    if congestion_ratios:
-        # Calculate average congestion ratio across peak windows (index 2-3 = 8:00-9:00)
-        peak_ratios = []
-        for seg_id, ratios in congestion_ratios.items():
-            peak_avg = np.mean(ratios[2:4])  # 8:00-8:30 and 8:30-9:00
+    if not congestion_ratios:
+        return df
+
+    # Compute the actual peak congestion ratio (average across peak windows 4-7 = 8:00-9:00)
+    # Only use road segments that had any traffic (ratio > 1.0) to avoid diluting with empty roads
+    peak_ratios = []
+    for seg_id, ratios in congestion_ratios.items():
+        peak_avg = np.mean(ratios[4:8])  # 8:00-8:15, 8:15-8:30, 8:30-8:45, 8:45-9:00
+        if peak_avg > 1.0:
             peak_ratios.append(peak_avg)
 
-        overall_avg = np.mean(peak_ratios) if peak_ratios else 1.0
-        print(f"    Average peak congestion multiplier: {overall_avg:.2f}x")
+    bpr_ratio = np.mean(peak_ratios) if peak_ratios else 1.0
+    print(f"    Actual peak BPR congestion ratio: {bpr_ratio:.2f}x (from {len(peak_ratios)} congested segments)")
 
-        # Apply to car times
-        df["car_minutes_congested"] = df["car_minutes"] * overall_avg
+    df["car_minutes_congested"] = df["car_minutes"] * bpr_ratio
 
-        # Recompute mode choice with congested car times
-        def choose_mode_congested(row):
-            times = {
-                "CAR": row.get("car_minutes_congested", float("nan")),
-                "TRANSIT": row.get("transit_minutes", float("nan")),
-                "BICYCLE": row.get("bike_minutes", float("nan")),
-            }
-            valid = {k: v for k, v in times.items() if pd.notna(v)}
-            if not valid:
-                return "CAR"
-            return min(valid, key=valid.get)
+    # Re-run generalized cost mode choice with actual BPR ratio
+    # Use same seed derivation as routing.py for consistent noise per OD pair
+    def choose_mode_congested(row):
+        seed = abs(hash(f"{row['from_id']}_{row['to_id']}")) % (2 ** 32)
+        rng = np.random.default_rng(seed)
+        noise = lambda: rng.normal(0, MODE_CHOICE["noise_std_min"])
 
-        df["chosen_mode_congested"] = df.apply(choose_mode_congested, axis=1)
+        scores = {}
+        car_min = row.get("car_minutes_congested")
+        transit_min = row.get("transit_minutes")
+        bike_min = row.get("bike_minutes")
 
-        # Report shift
-        original_car = (df["chosen_mode"] == "CAR").sum()
-        congested_car = (df["chosen_mode_congested"] == "CAR").sum()
-        shift = original_car - congested_car
-        print(f"    Mode shift due to congestion: {shift} trips moved away from car")
-        print(f"    Car share: {original_car/len(df)*100:.1f}% -> {congested_car/len(df)*100:.1f}%")
+        if pd.notna(car_min):
+            scores["CAR"] = car_min * 1.0 + noise()  # BPR already applied to car_minutes_congested
+        if pd.notna(transit_min):
+            scores["TRANSIT"] = transit_min * MODE_CHOICE["transit_ivt_factor"] + noise()
+        if pd.notna(bike_min):
+            scores["BICYCLE"] = bike_min * MODE_CHOICE["bike_ivt_factor"] + noise()
+
+        if not scores:
+            return "CAR"
+        return min(scores, key=scores.get)
+
+    df["chosen_mode"] = df.apply(choose_mode_congested, axis=1)
+
+    original_car = (mode_choice_df["chosen_mode"] == "CAR").sum()
+    congested_car = (df["chosen_mode"] == "CAR").sum()
+    shift = original_car - congested_car
+    print(f"    Mode shift due to congestion: {shift} trips moved away from car")
+    print(f"    Car share: {original_car/len(df)*100:.1f}% -> {congested_car/len(df)*100:.1f}%")
 
     return df
 

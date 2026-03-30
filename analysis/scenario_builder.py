@@ -135,20 +135,18 @@ def _double_feed_frequency(input_zip: Path, output_zip: Path):
             # Sort by departure time
             trip_dep_times.sort(key=lambda x: x[1])
 
-            # Insert interpolated trips between consecutive trips
+            TARGET_HEADWAY = 300  # 5 minutes in seconds
+
+            # Insert trips every 5 minutes throughout each gap
             for i in range(len(trip_dep_times) - 1):
                 trip_a_id, dep_a = trip_dep_times[i]
                 trip_b_id, dep_b = trip_dep_times[i + 1]
 
                 headway = dep_b - dep_a
-                if headway < 120:  # Skip if already very frequent (< 2 min)
+                if headway <= TARGET_HEADWAY:  # Already at or below 5-min headway
                     continue
 
-                # New trip at midpoint
-                mid_dep = dep_a + headway // 2
-                offset = mid_dep - dep_a
-
-                # Copy stop pattern from trip A
+                # Get stop pattern from trip A (reused for all inserts in this gap)
                 trip_a_stops = stop_times_df[
                     stop_times_df["trip_id"] == trip_a_id
                 ].copy()
@@ -156,29 +154,33 @@ def _double_feed_frequency(input_zip: Path, output_zip: Path):
                 if len(trip_a_stops) == 0:
                     continue
 
-                new_trip_id = f"{trip_a_id}_interp_{i}"
-
-                # Create new trip entry
                 trip_a_row = trips_df[trips_df["trip_id"] == trip_a_id].iloc[0].copy()
-                trip_a_row["trip_id"] = new_trip_id
-                new_trips.append(trip_a_row)
 
-                # Create new stop_times with shifted times
-                for _, stop_row in trip_a_stops.iterrows():
-                    new_stop = stop_row.copy()
-                    new_stop["trip_id"] = new_trip_id
+                # Insert as many trips as needed to reach 5-min headways
+                num_inserts = headway // TARGET_HEADWAY - 1
+                for j in range(1, num_inserts + 1):
+                    offset = j * TARGET_HEADWAY
+                    new_trip_id = f"{trip_a_id}_5min_{i}_{j}"
 
-                    arr_sec = time_to_seconds(stop_row["arrival_time"])
-                    dep_sec = time_to_seconds(stop_row["departure_time"])
+                    new_trip = trip_a_row.copy()
+                    new_trip["trip_id"] = new_trip_id
+                    new_trips.append(new_trip)
 
-                    if arr_sec is not None:
-                        new_stop["arrival_time"] = seconds_to_time(arr_sec + offset)
-                    if dep_sec is not None:
-                        new_stop["departure_time"] = seconds_to_time(dep_sec + offset)
+                    for _, stop_row in trip_a_stops.iterrows():
+                        new_stop = stop_row.copy()
+                        new_stop["trip_id"] = new_trip_id
 
-                    new_stop_times.append(new_stop)
+                        arr_sec = time_to_seconds(stop_row["arrival_time"])
+                        dep_sec = time_to_seconds(stop_row["departure_time"])
 
-                interp_count += 1
+                        if arr_sec is not None:
+                            new_stop["arrival_time"] = seconds_to_time(arr_sec + offset)
+                        if dep_sec is not None:
+                            new_stop["departure_time"] = seconds_to_time(dep_sec + offset)
+
+                        new_stop_times.append(new_stop)
+
+                    interp_count += 1
 
         # Append new data
         if new_trips:

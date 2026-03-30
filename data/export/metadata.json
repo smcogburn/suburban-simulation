@@ -1,14 +1,14 @@
 {
   "study_area": {
     "center": [
-      -76.492,
-      38.978
+      -76.66,
+      38.985
     ],
     "bbox": {
-      "west": -76.52,
-      "south": 38.95,
-      "east": -76.46,
-      "north": 39.0
+      "west": -76.9,
+      "south": 38.87,
+      "east": -76.42,
+      "north": 39.1
     }
   },
   "time_range": {
@@ -22,8 +22,8 @@
       "description": "Current transit network, no bike infrastructure changes"
     },
     "policy_a": {
-      "label": "Policy A: Doubled Bus Frequency",
-      "description": "Bus headways halved across local bus network"
+      "label": "Policy A: 5-Minute Bus Frequency",
+      "description": "Bus headways reduced to 5 minutes across local bus network"
     },
     "policy_b": {
       "label": "Policy B: Protected Bike Lanes",
@@ -42,11 +42,11 @@
   },
   "stats": {
     "baseline": {
-      "car_pct": 100.0,
-      "transit_pct": 0.0,
-      "bicycle_pct": 0.0,
+      "car_pct": 97.9,
+      "transit_pct": 0.5,
+      "bicycle_pct": 1.6,
       "walk_pct": 0.0,
-      "total_trips": 6000
+      "total_trips": 31800
     }
   }
 }
