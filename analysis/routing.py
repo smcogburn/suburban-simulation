@@ -122,6 +122,7 @@ def run_scenario_fast(
     scenario_name: str,
     origins: gpd.GeoDataFrame,
     destinations: gpd.GeoDataFrame,
+    od_matrix: Optional[pd.DataFrame] = None,
 ) -> dict:
     """
     Run TravelTimeMatrix for a scenario (fast pass — aggregate stats).
@@ -183,6 +184,23 @@ def run_scenario_fast(
         bike_times["bike_minutes"] = pd.to_numeric(bike_times["bike_time"], errors="coerce")
         print(f"    Bike trips computed: {len(bike_times)}")
 
+    # --- Compute WALK travel times ---
+    # Walk is computed separately so short local trips (<2km, ~24 min) can compete.
+    # TRANSIT+WALK above only returns NaN for unwalkable pairs — it doesn't label them walk.
+    # Without this pass, walk never appears as a mode choice option.
+    print("  Computing WALK travel times...")
+    walk_times = compute_travel_time_matrix(
+        network, origins, destinations, departure,
+        modes=[r5py.TransportMode.WALK],
+    )
+    walk_times = walk_times.rename(columns={"travel_time": "walk_time"})
+    walk_times["walk_minutes"] = pd.to_numeric(walk_times["walk_time"], errors="coerce")
+    # Cap walk at 45 min — beyond that, nobody walks regardless of preference noise.
+    # (45 min ≈ 3.75 km at 5 km/h — generous for suburban pedestrian distances)
+    walk_times.loc[walk_times["walk_minutes"] > 45, "walk_minutes"] = float("nan")
+    n_walk_valid = walk_times["walk_minutes"].notna().sum()
+    print(f"    Walk trips computed: {len(walk_times)} ({n_walk_valid} within 45-min cap)")
+
     # --- Merge and determine mode choice ---
     print("\n  Determining mode choice (fastest mode wins)...")
     merged = car_times[["from_id", "to_id", "car_minutes"]].merge(
@@ -200,34 +218,86 @@ def run_scenario_fast(
     else:
         merged["bike_minutes"] = float("nan")
 
+    merged = merged.merge(
+        walk_times[["from_id", "to_id", "walk_minutes"]],
+        on=["from_id", "to_id"],
+        how="left",
+    )
+
+    # Attach trip_type (commute / local) if od_matrix provided — used for diagnostics
+    if od_matrix is not None:
+        type_lookup = od_matrix.set_index(["from_id", "to_id"])["trip_type"]
+        merged["trip_type"] = merged.apply(
+            lambda r: type_lookup.get((r["from_id"], r["to_id"]), "unknown"), axis=1
+        )
+
     # ── Diagnostics: print routing coverage and time gaps ──────────────────
     n_total = len(merged)
     n_transit_valid = merged["transit_minutes"].notna().sum()
     n_bike_valid    = merged["bike_minutes"].notna().sum() if "bike_minutes" in merged.columns else 0
+    n_walk_valid    = merged["walk_minutes"].notna().sum() if "walk_minutes" in merged.columns else 0
 
     print(f"\n  Routing coverage ({n_total} OD pairs):")
     print(f"    Car valid:     {merged['car_minutes'].notna().sum()} ({100*merged['car_minutes'].notna().mean():.1f}%)")
     print(f"    Transit valid: {n_transit_valid} ({100*n_transit_valid/n_total:.1f}%)")
     if "bike_minutes" in merged.columns:
         print(f"    Bike valid:    {n_bike_valid} ({100*n_bike_valid/n_total:.1f}%)")
+    if "walk_minutes" in merged.columns:
+        print(f"    Walk valid:    {n_walk_valid} ({100*n_walk_valid/n_total:.1f}%,  ≤45 min cap)")
+
+    def _print_gap_stats(label, gap_series):
+        n = len(gap_series)
+        print(f"\n  {label} vs car time gap (n={n}):")
+        print(f"    mean={gap_series.mean():.1f} min  median={gap_series.median():.1f} min  "
+              f"min={gap_series.min():.1f} min  max={gap_series.max():.1f} min")
+        print(f"    Faster than car (gap<0):          {(gap_series<0).sum()} ({100*(gap_series<0).mean():.1f}%)")
+        print(f"    Within 15 min of car:             {(gap_series<15).sum()} ({100*(gap_series<15).mean():.1f}%)")
+        print(f"    >40 min slower than car:          {(gap_series>40).sum()} ({100*(gap_series>40).mean():.1f}%)")
 
     if n_transit_valid > 0:
         gap = merged.loc[merged["transit_minutes"].notna(), "transit_minutes"] - \
               merged.loc[merged["transit_minutes"].notna(), "car_minutes"]
-        print(f"\n  Transit vs car time gap (where both valid):")
-        print(f"    mean={gap.mean():.1f} min  median={gap.median():.1f} min  "
-              f"min={gap.min():.1f} min  max={gap.max():.1f} min")
-        print(f"    Transit faster (gap<0):        {(gap < 0).sum()} pairs ({100*(gap<0).mean():.1f}%)")
-        print(f"    Transit within 20 min of car:  {(gap < 20).sum()} pairs ({100*(gap<20).mean():.1f}%)")
-        print(f"    Transit >40 min slower than car: {(gap > 40).sum()} pairs ({100*(gap>40).mean():.1f}%)")
+        _print_gap_stats("Transit", gap)
 
     if n_bike_valid > 0 and "bike_minutes" in merged.columns:
         bgap = merged.loc[merged["bike_minutes"].notna(), "bike_minutes"] - \
                merged.loc[merged["bike_minutes"].notna(), "car_minutes"]
-        print(f"\n  Bike vs car time gap (where both valid):")
-        print(f"    mean={bgap.mean():.1f} min  median={bgap.median():.1f} min")
-        print(f"    Bike faster (gap<0):           {(bgap < 0).sum()} pairs ({100*(bgap<0).mean():.1f}%)")
-        print(f"    Bike within 10 min of car:     {(bgap < 10).sum()} pairs ({100*(bgap<10).mean():.1f}%)")
+        _print_gap_stats("Bike", bgap)
+
+    if n_walk_valid > 0 and "walk_minutes" in merged.columns:
+        wgap = merged.loc[merged["walk_minutes"].notna(), "walk_minutes"] - \
+               merged.loc[merged["walk_minutes"].notna(), "car_minutes"]
+        _print_gap_stats("Walk", wgap)
+
+    # Commute vs local breakdown (only if od_matrix was passed)
+    if "trip_type" in merged.columns:
+        print(f"\n  Breakdown by trip type:")
+        for ttype in ["commute", "local"]:
+            sub = merged[merged["trip_type"] == ttype]
+            if len(sub) == 0:
+                continue
+            t_cov = sub["transit_minutes"].notna().mean() * 100
+            b_cov = sub["bike_minutes"].notna().mean() * 100 if "bike_minutes" in sub.columns else 0
+            w_cov = sub["walk_minutes"].notna().mean() * 100 if "walk_minutes" in sub.columns else 0
+            print(f"    {ttype.upper()} ({len(sub)} pairs): "
+                  f"transit={t_cov:.0f}%  bike={b_cov:.0f}%  walk={w_cov:.0f}% valid routes")
+            # Time gaps for local trips only (commute is expected to be car-dominant)
+            if ttype == "local":
+                valid_t = sub.loc[sub["transit_minutes"].notna()]
+                if len(valid_t) > 0:
+                    tgap = valid_t["transit_minutes"] - valid_t["car_minutes"]
+                    print(f"      Local transit gap: median={tgap.median():.1f} min, "
+                          f"within 20min: {(tgap<20).sum()} pairs ({100*(tgap<20).mean():.1f}%)")
+                valid_b = sub.loc[sub["bike_minutes"].notna()]
+                if len(valid_b) > 0:
+                    bgap2 = valid_b["bike_minutes"] - valid_b["car_minutes"]
+                    print(f"      Local bike gap:    median={bgap2.median():.1f} min, "
+                          f"within 10min: {(bgap2<10).sum()} pairs ({100*(bgap2<10).mean():.1f}%)")
+                valid_w = sub.loc[sub["walk_minutes"].notna()]
+                if len(valid_w) > 0:
+                    wgap2 = valid_w["walk_minutes"] - valid_w["car_minutes"]
+                    print(f"      Local walk gap:    median={wgap2.median():.1f} min, "
+                          f"within 15min: {(wgap2<15).sum()} pairs ({100*(wgap2<15).mean():.1f}%)")
     # ── End diagnostics ─────────────────────────────────────────────────────
 
     # Generalized cost mode choice
@@ -245,12 +315,16 @@ def run_scenario_fast(
         transit_min = row.get("transit_minutes")
         bike_min = row.get("bike_minutes")
 
+        walk_min = row.get("walk_minutes")
+
         if pd.notna(car_min):
             scores["CAR"] = car_min * MODE_CHOICE["car_bpr_factor"] + MODE_CHOICE["car_penalty_min"] + noise()
         if pd.notna(transit_min):
             scores["TRANSIT"] = transit_min * MODE_CHOICE["transit_ivt_factor"] + noise()
         if pd.notna(bike_min):
             scores["BICYCLE"] = bike_min * MODE_CHOICE["bike_ivt_factor"] + noise()
+        if pd.notna(walk_min):
+            scores["WALK"] = walk_min * MODE_CHOICE["walk_ivt_factor"] + noise()
 
         if not scores:
             return "CAR"
@@ -262,7 +336,7 @@ def run_scenario_fast(
     # Post-choice diagnostics: how many chose each mode before final tally
     pre_tally = merged["chosen_mode"].value_counts()
     print(f"\n  Pre-BPR mode choice (before congestion adjustment):")
-    for mode in ["CAR", "TRANSIT", "BICYCLE"]:
+    for mode in ["CAR", "TRANSIT", "BICYCLE", "WALK"]:
         c = pre_tally.get(mode, 0)
         print(f"    {mode}: {c} ({100*c/n_total:.1f}%)")
 
@@ -278,7 +352,7 @@ def run_scenario_fast(
 
     print(f"\n  Mode Share Results for {scenario['label']}:")
     print(f"  {'-'*40}")
-    for mode in ["CAR", "TRANSIT", "BICYCLE"]:
+    for mode in ["CAR", "TRANSIT", "BICYCLE", "WALK"]:
         count = stats[f"{mode.lower()}_count"]
         pct = stats[f"{mode.lower()}_pct"]
         if count > 0:
@@ -289,6 +363,7 @@ def run_scenario_fast(
         "car_times": car_times,
         "transit_times": transit_times,
         "bike_times": bike_times,
+        "walk_times": walk_times,
         "mode_choice": merged,
         "stats": stats,
         "network": network,  # reuse in detailed pass to avoid rebuilding

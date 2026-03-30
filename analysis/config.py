@@ -175,10 +175,11 @@ MODE_CHOICE = {
     "transit_ivt_factor": 0.85,  # productive in-vehicle time discount (riders can read/work)
     "bike_ivt_factor": 1.15,     # physical effort penalty
     "walk_ivt_factor": 1.4,      # standard transport research effort penalty
-    "noise_std_min": 12,         # std dev of individual preference variation (minutes).
-                                 # 12 min reflects unobserved heterogeneity: car-free households,
-                                 # cycling enthusiasts, transit preferences. Standard range in
-                                 # suburban discrete choice models is 8-15 min.
+    "noise_std_min": 15,         # std dev of individual preference variation (minutes).
+                                 # 15 min reflects unobserved heterogeneity: car-free households,
+                                 # cycling enthusiasts, transit preferences, captive riders.
+                                 # Standard range in suburban discrete choice models is 8-15 min;
+                                 # using upper bound to capture latent demand in a car-dependent area.
 }
 
 # Maximum bicycle traffic stress level for routing.

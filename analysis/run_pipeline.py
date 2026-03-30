@@ -114,7 +114,7 @@ def run_pipeline(
             continue
 
         # Fast pass: TravelTimeMatrix for mode-share statistics
-        fast_results = run_scenario_fast(scenario_name, origins_gdf, destinations_gdf)
+        fast_results = run_scenario_fast(scenario_name, origins_gdf, destinations_gdf, od_matrix=od_matrix)
         all_stats[scenario_name] = fast_results["stats"]
 
         if diag_only:

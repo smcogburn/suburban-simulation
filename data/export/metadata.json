@@ -42,10 +42,10 @@
   },
   "stats": {
     "baseline": {
-      "car_pct": 97.9,
-      "transit_pct": 0.5,
-      "bicycle_pct": 1.6,
-      "walk_pct": 0.0,
+      "car_pct": 97.3,
+      "transit_pct": 0.8,
+      "bicycle_pct": 1.8,
+      "walk_pct": 0.1,
       "total_trips": 31800
     }
   }
