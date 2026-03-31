@@ -9,6 +9,10 @@ venv/
 # Data (large files, download separately)
 data/osm/*.pbf
 data/gtfs/**/*.zip
+data/mdotmta_gtfs_localbus/
+
+# r5py / osmnx cache (can be hundreds of MB, fully regenerable)
+cache/
 
 # Generated outputs
 outputs/
