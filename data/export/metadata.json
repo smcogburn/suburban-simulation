@@ -27,7 +27,7 @@
     },
     "policy_b": {
       "label": "Policy B: Protected Bike Lanes",
-      "description": "Protected bike lanes on arterial roads (LTS reduced to 2)"
+      "description": "Protected bike lanes on arterial roads \u2014 cyclists can use arterials directly"
     },
     "policy_ab": {
       "label": "Both Policies",
@@ -41,10 +41,31 @@
     "BICYCLE": "#44ff88"
   },
   "stats": {
+    "policy_a": {
+      "car_pct": 97.5,
+      "transit_pct": 0.8,
+      "bicycle_pct": 1.6,
+      "walk_pct": 0.1,
+      "total_trips": 31800
+    },
     "baseline": {
       "car_pct": 97.3,
       "transit_pct": 0.8,
       "bicycle_pct": 1.8,
+      "walk_pct": 0.1,
+      "total_trips": 31800
+    },
+    "policy_b": {
+      "car_pct": 95.8,
+      "transit_pct": 0.7,
+      "bicycle_pct": 3.4,
+      "walk_pct": 0.1,
+      "total_trips": 31800
+    },
+    "policy_ab": {
+      "car_pct": 95.9,
+      "transit_pct": 0.6,
+      "bicycle_pct": 3.5,
       "walk_pct": 0.1,
       "total_trips": 31800
     }

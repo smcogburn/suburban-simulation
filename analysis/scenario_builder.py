@@ -22,6 +22,16 @@ from analysis.config import (
     BIKE_LANE_HIGHWAY_TYPES,
 )
 
+# Local bus feeds to double for Policy A.
+# Only these three are local fixed-route bus services in the study corridor.
+# Regional services (MARC rail, light rail, commuter express) are left unchanged —
+# their headways are governed by different infrastructure/funding constraints.
+LOCAL_BUS_FEEDS = {
+    "aac_gtfs.zip",                   # Anne Arundel County buses (Annapolis/Crofton)
+    "princegeorgescounty-md-us.zip",  # PG County TheBus (Bowie/Largo)
+    "mdotmta_gtfs_localbus.zip",      # MTA Maryland local bus
+}
+
 
 def double_bus_frequency():
     """
@@ -47,10 +57,10 @@ def double_bus_frequency():
             print(f"  Skipping {feed_name} (not found)")
             continue
 
-        # Only modify local bus - copy others unchanged
-        if "localbus" not in feed_name:
+        # Only double local bus feeds — regional rail/express copied unchanged
+        if feed_name not in LOCAL_BUS_FEEDS:
             shutil.copy2(baseline_path, doubled_path)
-            print(f"  Copied {feed_name} unchanged")
+            print(f"  Copied {feed_name} unchanged (regional service)")
             continue
 
         print(f"  Modifying {feed_name}...")
@@ -252,13 +262,17 @@ def add_bike_lanes():
         def way(self, w):
             highway = w.tags.get("highway", "")
             if highway in BIKE_LANE_HIGHWAY_TYPES:
-                # Add bike lane tags
+                # Add protected bike lane tags.
+                # cycleway=track = physically separated path alongside the road.
+                # This is the standard OSM tag for a protected lane and is what
+                # r5py/R5 reads when computing LTS — it pushes arterials from
+                # LTS 4 (dangerous, excluded at max_lts=3) down to LTS 1-2
+                # (protected, included). Using "lane" (painted only) is weaker
+                # and may not reliably reach LTS ≤ 3 on high-speed primaries.
+                # The raw "lts" key is NOT read by R5 and has been removed.
                 new_tags = dict(w.tags)
-                new_tags["cycleway"] = "lane"
-                new_tags["lts"] = "2"
-                self.writer.add_way(
-                    w.replace(tags=new_tags)
-                )
+                new_tags["cycleway"] = "track"
+                self.writer.add_way(w.replace(tags=new_tags))
                 self.modified_count += 1
             else:
                 self.writer.add_way(w)
@@ -280,6 +294,17 @@ def build_all_scenarios():
     """Build modified data for all policy scenarios."""
     double_bus_frequency()
     add_bike_lanes()
+
+    # Re-clip the doubled GTFS directory with the same peak-window filter.
+    # Doubling trips can push stop_times counts well above the clipped baseline
+    # (e.g. PG County: 32k → 64k after doubling). Clipping after doubling keeps
+    # the network build fast while still having the correct doubled rush-hour trips.
+    print("\n" + "=" * 60)
+    print("Clipping doubled GTFS to peak window...")
+    print("=" * 60)
+    from analysis.clip_gtfs import clip_all_feeds
+    clip_all_feeds(GTFS_DOUBLED_DIR)
+
     print("\nAll scenario data prepared.")
 
 

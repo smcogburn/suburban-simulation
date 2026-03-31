@@ -230,7 +230,23 @@ def export_trips(
 def export_metadata(all_stats: dict):
     """
     Export metadata JSON with study area info and aggregate statistics.
+
+    Merges new stats into any existing metadata.json so that running scenarios
+    one at a time (--scenario baseline, then --scenario policy_a, etc.) doesn't
+    overwrite previously computed stats.
     """
+    out_path = EXPORT_DIR / "metadata.json"
+
+    # Load existing metadata if present, so we can merge stats from prior runs
+    existing_stats = {}
+    if out_path.exists():
+        try:
+            with open(out_path) as f:
+                existing = json.load(f)
+            existing_stats = existing.get("stats", {})
+        except (json.JSONDecodeError, KeyError):
+            pass  # corrupted file — start fresh
+
     metadata = {
         "study_area": {
             "center": [VIZ_CENTER["lng"], VIZ_CENTER["lat"]],
@@ -243,7 +259,7 @@ def export_metadata(all_stats: dict):
         },
         "scenarios": {},
         "mode_colors": MODE_COLORS,
-        "stats": {},
+        "stats": existing_stats,  # start from existing, then overwrite with new
     }
 
     for name, scenario in SCENARIOS.items():
@@ -262,8 +278,8 @@ def export_metadata(all_stats: dict):
         }
 
     EXPORT_DIR.mkdir(parents=True, exist_ok=True)
-    out_path = EXPORT_DIR / "metadata.json"
     with open(out_path, "w") as f:
         json.dump(metadata, f, indent=2)
 
     print(f"  Exported metadata to {out_path}")
+    print(f"  Stats present: {sorted(metadata['stats'].keys())}")

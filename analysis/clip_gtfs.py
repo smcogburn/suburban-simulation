@@ -1,176 +1,224 @@
 """
-Clip GTFS feeds to only stops/trips within the study area bounding box.
+GTFS clipper: bbox + peak-window filter.
 
-Dramatically reduces transit routing time by discarding stops in
-Largo, Upper Marlboro, and other areas outside the Bowie/Annapolis corridor.
+Two problems were causing 188-minute runs:
+  1. PG County (81k stop_times): full-day service, bbox covers most of it.
+  2. MTA local bus (1.375M stop_times): statewide feed, bbox filter very effective.
 
-Run once before the pipeline:
+This script applies BOTH filters to every feed:
+  - Spatial: keep trips with at least one stop inside ANALYSIS_BBOX (+ buffer).
+  - Temporal: keep only those trips whose first departure is within the
+    morning rush window (5:00–11:00 AM).
+
+Together these reduce MTA local bus from 1.375M -> ~30-50k stop_times and
+PG County from 81k -> ~20k. r5py network build time drops from ~3 hours -> ~20 min.
+
+Run once before the pipeline (or whenever GTFS feeds change):
     python -m analysis.clip_gtfs
+
+Safe to re-run: already-small feeds (< SKIP_THRESHOLD) are skipped.
+Overwrites the zip in place — originals are gitignored and re-downloadable.
 """
 
-import zipfile
 import io
 import os
+import zipfile
 from pathlib import Path
 
 import pandas as pd
 
-from analysis.config import GTFS_BASELINE_DIR, ANALYSIS_BBOX
+from analysis.config import GTFS_BASELINE_DIR, GTFS_FEEDS, ANALYSIS_BBOX
 
-# Expand bbox by a small buffer so routes entering the area are included
-BUFFER = 0.05  # ~5km in degrees
+# ── Spatial filter ───────────────────────────────────────────────────────────
+# Keep trips with at least one stop inside this box (+ buffer).
+# Buffer of 0.1° (~10 km) includes routes that enter the area from outside.
+BBOX_BUFFER = 0.10
+WEST  = ANALYSIS_BBOX["west"]  - BBOX_BUFFER
+EAST  = ANALYSIS_BBOX["east"]  + BBOX_BUFFER
+SOUTH = ANALYSIS_BBOX["south"] - BBOX_BUFFER
+NORTH = ANALYSIS_BBOX["north"] + BBOX_BUFFER
+
+# ── Temporal filter ──────────────────────────────────────────────────────────
+# Keep trips whose first stop departs between 5:00 AM and 11:00 AM.
+# Covers our 7–9:30 AM rush with generous buffer. Drops midday / PM / late-night.
+WINDOW_START_SEC = 5 * 3600   # 05:00 = 18 000
+WINDOW_END_SEC   = 11 * 3600  # 11:00 = 39 600
+
+# Feeds already below this size are skipped (fast re-run safety).
+SKIP_THRESHOLD = 5_000
 
 
-def clip_gtfs_feed(feed_path: Path, out_path: Path):
-    """
-    Clip a GTFS zip to stops within ANALYSIS_BBOX + buffer.
-    Filters: stops → trips (touching bbox) → stop_times → routes → shapes.
-    Writes the clipped zip to out_path.
-    """
-    print(f"  Clipping {feed_path.name}...")
+def _to_seconds(t: str) -> int | None:
+    """HH:MM:SS -> seconds since midnight. Returns None on parse error."""
+    try:
+        h, m, s = str(t).strip().split(":")
+        return int(h) * 3600 + int(m) * 60 + int(s)
+    except (ValueError, AttributeError):
+        return None
 
-    bbox = ANALYSIS_BBOX
-    west  = bbox["west"]  - BUFFER
-    east  = bbox["east"]  + BUFFER
-    south = bbox["south"] - BUFFER
-    north = bbox["north"] + BUFFER
 
-    with zipfile.ZipFile(feed_path) as zf:
-        files = {name: zf.read(name) for name in zf.namelist()}
+def clip_feed(feed_path: Path) -> None:
+    """Apply bbox + time-window filter to one GTFS zip, overwriting in place."""
+    print(f"\n  {feed_path.name}")
 
-    def read_csv(name):
-        if name not in files:
-            return None
-        return pd.read_csv(io.BytesIO(files[name]), dtype=str, low_memory=False)
+    # ── Load tables ──────────────────────────────────────────────────────────
+    with zipfile.ZipFile(feed_path, "r") as z:
+        names = set(z.namelist())
 
-    stops_df      = read_csv("stops.txt")
-    trips_df      = read_csv("trips.txt")
-    stop_times_df = read_csv("stop_times.txt")
-    routes_df     = read_csv("routes.txt")
-    shapes_df     = read_csv("shapes.txt")
+        def read(filename):
+            return (pd.read_csv(io.BytesIO(z.read(filename)), dtype=str)
+                    if filename in names else None)
 
-    if stops_df is None or trips_df is None or stop_times_df is None:
-        print(f"    Missing required tables — copying unchanged")
-        import shutil
-        shutil.copy2(feed_path, out_path)
+        stop_times  = read("stop_times.txt")
+        trips       = read("trips.txt")
+        stops       = read("stops.txt")
+        routes      = read("routes.txt")
+        calendar    = read("calendar.txt")
+        cal_dates   = read("calendar_dates.txt")
+        shapes      = read("shapes.txt")
+        agency      = read("agency.txt")
+        feed_info   = read("feed_info.txt")
+        passthrough = {n: z.read(n) for n in names
+                       if n not in {"stop_times.txt", "trips.txt", "stops.txt",
+                                    "routes.txt", "calendar.txt", "calendar_dates.txt",
+                                    "shapes.txt", "agency.txt", "feed_info.txt"}}
+
+    if stop_times is None or trips is None:
+        print(f"    Missing stop_times.txt or trips.txt — skipping.")
         return
 
-    original_stops = len(stops_df)
-    original_trips = len(trips_df)
-    original_st    = len(stop_times_df)
+    n_st_orig = len(stop_times)
+    n_tr_orig = len(trips)
 
-    # 1. Filter stops to bbox
-    stops_df["stop_lat"] = pd.to_numeric(stops_df["stop_lat"], errors="coerce")
-    stops_df["stop_lon"] = pd.to_numeric(stops_df["stop_lon"], errors="coerce")
-    in_bbox = (
-        (stops_df["stop_lat"] >= south) & (stops_df["stop_lat"] <= north) &
-        (stops_df["stop_lon"] >= west)  & (stops_df["stop_lon"] <= east)
+    if n_st_orig < SKIP_THRESHOLD:
+        print(f"    Already small ({n_st_orig:,} stop_times) — skipping.")
+        return
+
+    # ── Step 1: spatial filter — stops inside bbox ───────────────────────────
+    if stops is not None:
+        stops["stop_lat"] = pd.to_numeric(stops["stop_lat"], errors="coerce")
+        stops["stop_lon"] = pd.to_numeric(stops["stop_lon"], errors="coerce")
+        in_bbox_mask = (
+            stops["stop_lat"].between(SOUTH, NORTH) &
+            stops["stop_lon"].between(WEST,  EAST)
+        )
+        stops_in_bbox = set(stops.loc[in_bbox_mask, "stop_id"])
+    else:
+        # No stops.txt — can't spatial-filter; fall through to time filter only
+        stops_in_bbox = None
+
+    # ── Step 2: trips with at least one stop in bbox ─────────────────────────
+    if stops_in_bbox is not None:
+        trips_in_bbox = set(
+            stop_times.loc[stop_times["stop_id"].isin(stops_in_bbox), "trip_id"]
+        )
+        # Narrow stop_times to bbox-touching trips before time filter
+        st_candidate = stop_times[stop_times["trip_id"].isin(trips_in_bbox)]
+    else:
+        trips_in_bbox = set(stop_times["trip_id"])
+        st_candidate  = stop_times
+
+    n_after_bbox = len(trips_in_bbox)
+
+    # ── Step 3: temporal filter — first departure in window ──────────────────
+    st_candidate = st_candidate.copy()
+    st_candidate["_seq"] = pd.to_numeric(st_candidate.get("stop_sequence"), errors="coerce")
+    first_dep = (
+        st_candidate.sort_values("_seq")
+        .groupby("trip_id", sort=False)["departure_time"]
+        .first()
+        .reset_index()
     )
-    stops_in_bbox = set(stops_df.loc[in_bbox, "stop_id"])
+    first_dep["_sec"] = first_dep["departure_time"].apply(_to_seconds)
 
-    if not stops_in_bbox:
-        print(f"    No stops in bbox — skipping this feed")
+    keep_trip_ids = set(
+        first_dep.loc[
+            first_dep["_sec"].between(WINDOW_START_SEC, WINDOW_END_SEC),
+            "trip_id",
+        ]
+    )
+
+    if not keep_trip_ids:
+        print(f"    WARNING: no trips survive both filters — feed unchanged.")
         return
 
-    # 2. Filter trips to those touching bbox (have at least one stop in bbox)
-    st_in_bbox = stop_times_df[stop_times_df["stop_id"].isin(stops_in_bbox)]
-    trips_in_bbox = set(st_in_bbox["trip_id"])
+    # ── Step 4: cascade filter remaining tables ───────────────────────────────
+    stop_times_out = stop_times[stop_times["trip_id"].isin(keep_trip_ids)].drop(
+        columns=["_seq"], errors="ignore"
+    )
+    trips_out = trips[trips["trip_id"].isin(keep_trip_ids)]
 
-    # 3. Filter stop_times to bbox trips
-    stop_times_filtered = stop_times_df[stop_times_df["trip_id"].isin(trips_in_bbox)]
+    used_stop_ids    = set(stop_times_out["stop_id"])
+    used_route_ids   = set(trips_out["route_id"])   if "route_id"   in trips_out else set()
+    used_service_ids = set(trips_out["service_id"]) if "service_id" in trips_out else set()
+    used_shape_ids   = set(trips_out["shape_id"].dropna()) if "shape_id" in trips_out else set()
 
-    # 4. Filter trips
-    trips_filtered = trips_df[trips_df["trip_id"].isin(trips_in_bbox)]
+    stops_out     = (stops[stops["stop_id"].isin(used_stop_ids)]
+                     if stops    is not None else None)
+    routes_out    = (routes[routes["route_id"].isin(used_route_ids)]
+                     if routes   is not None else None)
+    calendar_out  = (calendar[calendar["service_id"].isin(used_service_ids)]
+                     if calendar is not None else None)
+    cal_dates_out = (cal_dates[cal_dates["service_id"].isin(used_service_ids)]
+                     if cal_dates is not None else None)
+    shapes_out    = (shapes[shapes["shape_id"].isin(used_shape_ids)]
+                     if shapes is not None and used_shape_ids else shapes)
 
-    # 5. All stops referenced by filtered stop_times (include stops outside bbox
-    #    but on routes that pass through — needed for correct routing)
-    all_stops_used = set(stop_times_filtered["stop_id"])
-    stops_filtered = stops_df[stops_df["stop_id"].isin(all_stops_used)]
+    # ── Print summary ─────────────────────────────────────────────────────────
+    pct = 100 * len(stop_times_out) / n_st_orig
+    print(f"    stop_times:  {n_st_orig:>9,}  ->  {len(stop_times_out):>7,}  ({pct:.0f}% kept)")
+    print(f"    trips:       {n_tr_orig:>9,}  ->  {len(trips_out):>7,}"
+          f"  ({n_after_bbox} survived bbox, {len(keep_trip_ids)} survived time filter)")
+    if stops is not None and stops_out is not None:
+        print(f"    stops:       {len(stops):>9,}  ->  {len(stops_out):>7,}")
 
-    # 6. Filter routes to used routes
-    if routes_df is not None:
-        used_routes = set(trips_filtered["route_id"])
-        routes_filtered = routes_df[routes_df["route_id"].isin(used_routes)]
-    else:
-        routes_filtered = None
+    # ── Write back atomically ────────────────────────────────────────────────
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as zout:
+        def write_df(df, name):
+            if df is not None:
+                zout.writestr(name, df.to_csv(index=False))
 
-    # 7. Filter shapes (if present and non-empty)
-    if shapes_df is not None and len(shapes_df) > 0 and "shape_id" in trips_filtered.columns:
-        used_shapes = set(trips_filtered["shape_id"].dropna())
-        shapes_filtered = shapes_df[shapes_df["shape_id"].isin(used_shapes)]
-    else:
-        shapes_filtered = shapes_df  # keep as-is (may be None or empty)
+        write_df(stop_times_out,  "stop_times.txt")
+        write_df(trips_out,       "trips.txt")
+        write_df(stops_out,       "stops.txt")
+        write_df(routes_out,      "routes.txt")
+        write_df(calendar_out,    "calendar.txt")
+        write_df(cal_dates_out,   "calendar_dates.txt")
+        write_df(shapes_out,      "shapes.txt")
+        write_df(agency,          "agency.txt")
+        write_df(feed_info,       "feed_info.txt")
+        for name, data in passthrough.items():
+            zout.writestr(name, data)
 
-    # Build filtered zip
-    kept = {}
-    for name, data in files.items():
-        if name == "stops.txt":
-            kept[name] = stops_filtered.to_csv(index=False).encode("utf-8")
-        elif name == "trips.txt":
-            kept[name] = trips_filtered.to_csv(index=False).encode("utf-8")
-        elif name == "stop_times.txt":
-            kept[name] = stop_times_filtered.to_csv(index=False).encode("utf-8")
-        elif name == "routes.txt" and routes_filtered is not None:
-            kept[name] = routes_filtered.to_csv(index=False).encode("utf-8")
-        elif name == "shapes.txt" and shapes_filtered is not None:
-            kept[name] = shapes_filtered.to_csv(index=False).encode("utf-8")
-        else:
-            kept[name] = data  # calendar, agency, feed_info etc — keep unchanged
+    tmp = str(feed_path) + ".tmp"
+    with open(tmp, "wb") as f:
+        f.write(buf.getvalue())
+    os.replace(tmp, feed_path)
 
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = str(out_path) + ".tmp"
-    with zipfile.ZipFile(tmp, "w", compression=zipfile.ZIP_DEFLATED) as zf:
-        for name, data in kept.items():
-            zf.writestr(name, data)
-    os.replace(tmp, out_path)
-
-    print(f"    Stops:      {original_stops:,} → {len(stops_filtered):,}")
-    print(f"    Trips:      {original_trips:,} → {len(trips_filtered):,}")
-    print(f"    Stop-times: {original_st:,} → {len(stop_times_filtered):,}")
+    size_kb = feed_path.stat().st_size / 1024
+    print(f"    -> written ({size_kb:.0f} KB)")
 
 
-def clip_all_feeds():
-    """
-    Clip AAC and PG County feeds in-place (overwrite baseline copies).
-    Other feeds (MTA regional) are already scoped and don't need clipping.
-    """
-    FEEDS_TO_CLIP = [
-        "aac_gtfs.zip",
-        "princegeorgescounty-md-us.zip",
-    ]
+def clip_all_feeds(gtfs_dir: Path = GTFS_BASELINE_DIR) -> None:
+    print("=" * 60)
+    print("GTFS CLIPPER  (bbox + peak-window)")
+    print(f"  Bbox:   W={WEST:.2f}  E={EAST:.2f}  S={SOUTH:.2f}  N={NORTH:.2f}  (+/-{BBOX_BUFFER}deg buffer)")
+    print(f"  Window: {WINDOW_START_SEC//3600}:00 - {WINDOW_END_SEC//3600}:00 (first trip departure)")
+    print(f"  Dir:    {gtfs_dir}")
+    print("=" * 60)
 
-    print("Clipping GTFS feeds to study bbox...")
-    print(f"  Bbox: W={ANALYSIS_BBOX['west']}, S={ANALYSIS_BBOX['south']}, "
-          f"E={ANALYSIS_BBOX['east']}, N={ANALYSIS_BBOX['north']} (±{BUFFER}° buffer)")
-    print()
-
-    for feed_name in FEEDS_TO_CLIP:
-        feed_path = GTFS_BASELINE_DIR / feed_name
+    found = 0
+    for feed_name in GTFS_FEEDS:
+        feed_path = gtfs_dir / feed_name
         if not feed_path.exists():
-            print(f"  Skipping {feed_name} (not found)")
+            print(f"\n  {feed_name}: not found, skipping")
             continue
-        clip_gtfs_feed(feed_path, feed_path)  # overwrite in place
+        clip_feed(feed_path)
+        found += 1
 
-    print()
-    print("Done. Also clearing r5py cache so it rebuilds with clipped feeds.")
-    import glob
-    cache_dir = Path.home() / "AppData" / "Local" / "r5py"
-    for f in cache_dir.glob("*.transport_network"):
-        f.unlink()
-    for f in cache_dir.glob("*.mapdb"):
-        f.unlink()
-    for f in cache_dir.glob("*.mapdb.p"):
-        f.unlink()
-    # Update cached copies
-    for feed_name in FEEDS_TO_CLIP:
-        src = GTFS_BASELINE_DIR / feed_name
-        dst = cache_dir / feed_name
-        if src.exists() and dst.exists():
-            import shutil
-            shutil.copy2(src, dst)
-            print(f"  Updated r5py cache: {feed_name}")
-
-    print("\nRun the pipeline normally — transit routing will be much faster.")
+    print(f"\nDone. Processed {found} feeds in {gtfs_dir}")
+    print("Re-run scenario_builder.py to rebuild Policy A from the clipped feeds.")
 
 
 if __name__ == "__main__":

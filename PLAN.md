@@ -1,5 +1,5 @@
 # Suburban Simulation — Current State & Plan
-*Last updated: 2026-03-29*
+*Last updated: 2026-03-30*
 
 ## What This Project Is
 
@@ -57,12 +57,13 @@ Analysis Pipeline (Python) → JSON exports → 3D Visualization (Three.js)
 | `config.py` | Complete — all params tuned, see key settings below |
 | `data_prep.py` | Working — extracts buildings/roads via osmnx |
 | `od_generation.py` | Working — proximity-based OD matrix (local + commute trips) |
-| `routing.py` | Working — TravelTimeMatrix + DetailedItineraries, generalized cost mode choice |
+| `routing.py` | Working — TravelTimeMatrix + DetailedItineraries, generalized cost mode choice. WALK mode added as separate routing pass. car_penalty_min=8 added. Commute/local diagnostics added. |
 | `congestion.py` | Working — dynamic 2-pass BPR, 30×5-min time windows |
-| `exporter.py` | Working — exports trips/congestion/metadata JSON |
+| `exporter.py` | Working — exports trips/congestion/metadata JSON (WALK trips skipped from viz, stats only) |
 | `scenario_builder.py` | Written — builds Policy A (5-min headways) and Policy B (OSM bike lanes) |
-| `run_pipeline.py` | Working — skip buildings if exist, 20-origin DetailedItineraries cap |
+| `run_pipeline.py` | Working — skip buildings if exist, 20-origin DetailedItineraries cap. `--diag-only` flag added. |
 | `export_transit_routes.py` | Working — exports GTFS shapes for visualization overlay |
+| `clip_gtfs.py` | **New** — bbox+time-window filter, run once before pipeline. Cuts 1.5M -> 56k stop_times (96%). |
 
 ### ✅ Visualization (Three.js — fully working)
 
@@ -74,9 +75,9 @@ All JS modules written and working:
 - `TimeController.js` — play/pause/speed
 - `ScenarioPanel.js` — scenario switching
 - `CinematicCamera.js` — idle cinematic mode (needs new shot coordinates for Annapolis corridor)
-- `TransitLayer.js` — GTFS route overlay (visible in transit x-ray mode)
+- `TransitLayer.js` — GTFS route overlay (hidden by default; debug toggle via `T` key or button)
 - `DataLoader.js` — JSON fetching and caching
-- `main.js` — render loop, x-ray click handlers, live mode count display
+- `main.js` — render loop, x-ray click handlers, live mode count display, transit routes debug toggle
 
 ### ✅ Data Available
 
@@ -84,10 +85,10 @@ All JS modules written and working:
 |------|------|-------|
 | `data/export/buildings.json` | 71 MB | Annapolis/Bowie corridor buildings |
 | `data/export/roads.json` | 19 MB | Road network with capacities |
-| `data/export/trips_baseline.json` | 8 MB | Baseline trip paths (20 origins × all dests) |
+| `data/export/trips_baseline.json` | 11 MB | Baseline trip paths (20 origins × all dests). Baseline confirmed working. |
 | `data/export/congestion_baseline.json` | 10 MB | 30-window BPR congestion |
-| `data/export/metadata.json` | 1 KB | Mode share stats |
-| `data/export/transit_routes.json` | TBD | GTFS route shapes for overlay |
+| `data/export/metadata.json` | 1 KB | Mode share stats (baseline: CAR 97.3%, TRANSIT 0.8%, BIKE 1.8%, WALK 0.1%) |
+| `data/export/transit_routes.json` | 485 KB | GTFS route shapes for overlay (debug only) |
 
 ### ✅ GTFS Feeds (in `data/gtfs/baseline/`)
 
@@ -116,14 +117,20 @@ NUM_LOCAL_DESTINATIONS = 150     # local POIs, proximity-filtered at 5km radius
 LOCAL_TRIP_RADIUS_KM = 5.0
 
 # Mode choice (generalized cost)
-noise_std_min = 12               # individual preference variation (was 5, too low)
+noise_std_min = 15               # individual preference variation (upper range of suburban models)
 transit_ivt_factor = 0.85        # productive transit time discount
 bike_ivt_factor = 1.15           # cycling effort penalty
 car_bpr_factor = 1.0             # free-flow first pass, BPR applied second pass
+car_penalty_min = 8              # parking search + egress walk (standard mode choice practice)
 
 # Bike routing
-BIKE_MAX_LTS_BASELINE = 3        # allows arterials cyclists actually use
-                                 # Policy B OSM tags lanes as LTS 2 → faster routes
+BIKE_MAX_LTS_BASELINE = 3        # LTS 3 = confident cyclist on secondary roads, no arterials
+                                 # (arterials are LTS 4 without infrastructure → excluded)
+                                 # Policy B tags arterials as LTS 2 → they become accessible
+                                 # This is the mechanism that generates Policy B's bike mode shift
+
+# Walk routing
+WALK_MAX_MINUTES = 45            # r5py walk trips capped at 45 min (~3.75 km)
 
 # Congestion: 30 × 5-minute windows (was 10 × 15-min, was 5 × 30-min)
 TIME_WINDOWS = [i*300 to (i+1)*300 for i in range(30)]
@@ -166,6 +173,13 @@ JAVA_TOOL_OPTIONS = "-Xmx10g"
 | AAC shapes.txt empty (no route geometry) | Reconstruct from stop sequences in export_transit_routes.py |
 | Missing local transit: no AAC or PG County feeds | Added both feeds — 773 additional stops in study area |
 | Transit 0% — no local buses in OD pairs | Above GTFS fixes; multimodal (walk+transit+walk) already working |
+| Near-0% transit/bike — car had no access/egress penalty | Added car_penalty_min=8 min (parking + walk from lot) |
+| WALK never appeared as mode option | Added separate WALK TravelTimeMatrix pass, capped at 45 min |
+| No visibility into why transit/bike low | Added routing coverage diagnostics + commute/local trip breakdown |
+| Runtime 18 min → 188 min after adding PG County GTFS | Identified: 84k stop times. Fix (GTFS bbox clip) not yet done. |
+| Transit route overlay shown in x-ray mode (paths inaccurate) | Hidden by default; debug toggle via T key or corner button |
+| 188-min pipeline runtime (was 18 min) | GTFS clipped: 1.5M -> 56k stop_times via clip_gtfs.py |
+| Metro GTFS loaded but serves 0 trips in study area | Removed from GTFS_FEEDS in config.py |
 
 ---
 
@@ -173,11 +187,10 @@ JAVA_TOOL_OPTIONS = "-Xmx10g"
 
 ### Immediate (before symposium)
 
-- [ ] **Run `python -m analysis.export_transit_routes`** — generates transit_routes.json for viz overlay
-- [ ] **Re-run baseline** with all fixes: `python -m analysis.run_pipeline --scenario baseline`
-  - Expected: bike ~5-12% (LTS 3 + noise_std=12), transit >0% (AAC + PG County feeds)
-- [ ] **Run scenario_builder.py** — builds Policy A GTFS + Policy B OSM
-- [ ] **Run full pipeline** — all 4 scenarios: `python -m analysis.run_pipeline`
+- [x] **Re-run baseline** — completed overnight. Results: CAR 97.3%, TRANSIT 0.8%, BIKE 1.8%, WALK 0.1%
+- [x] **Fix GTFS runtime** — `clip_gtfs.py` written and run. Combined bbox+time-window filter cuts 1.5M total stop_times to 56k (96% reduction). MTA local bus was real culprit (1.375M -> 15k). Metro removed from config (0 trips in study area). Expected runtime: ~20-30 min/scenario.
+- [ ] **Run scenario_builder.py** — builds Policy A GTFS (5-min headways) + Policy B OSM (bike lanes)
+- [ ] **Run remaining 3 scenarios** — policy_a, policy_b, policy_ab
 - [ ] **Push JSON exports** to GitHub so MacBook can pull for presentation
 
 ### Visual Polish (low priority, do after pipeline works)

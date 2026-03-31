@@ -114,8 +114,10 @@ def run_pipeline(
             continue
 
         # Fast pass: TravelTimeMatrix for mode-share statistics
+        t0 = time.time()
         fast_results = run_scenario_fast(scenario_name, origins_gdf, destinations_gdf, od_matrix=od_matrix)
         all_stats[scenario_name] = fast_results["stats"]
+        print(f"  [timing] Fast pass (TravelTimeMatrix): {(time.time()-t0)/60:.1f} min")
 
         if diag_only:
             print(f"\n  [--diag-only] Stopping after fast pass for {scenario_name}. No exports written.")
@@ -140,7 +142,7 @@ def run_pipeline(
             # 20 × 30 = 600 pairs per mode — large enough for a good visualization,
             # small enough to fit in memory.
             import numpy as np
-            VIZ_DET_ORIGINS = 20
+            VIZ_DET_ORIGINS = 10  # 10 origins × 159 dests = 1590 pairs/mode (~90 min vs ~3hr at 20)
             rng_det = np.random.default_rng(42)
             det_ids = rng_det.choice(
                 origins_gdf["id"].values,
@@ -154,10 +156,12 @@ def run_pipeline(
                   f"{len(viz_destinations)} destinations = "
                   f"{len(viz_origins) * len(viz_destinations)} pairs per mode...")
 
+            t1 = time.time()
             detailed_results = run_scenario_detailed(
                 scenario_name, viz_origins, viz_destinations,
                 network=fast_results.get("network"),
             )
+            print(f"  [timing] DetailedItineraries: {(time.time()-t1)/60:.1f} min")
 
             # Compute congestion from car itineraries
             car_itin = detailed_results["car_itineraries"]

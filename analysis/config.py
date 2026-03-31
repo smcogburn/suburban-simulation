@@ -22,13 +22,14 @@ OSM_PBF_BIKE = OSM_DIR / "columbia-bike.osm.pbf"
 
 # GTFS feed filenames (same names used in baseline/ and doubled/)
 GTFS_FEEDS = [
-    "aac_gtfs.zip",                      # Anne Arundel County buses — 158 stops (Annapolis/Crofton)
-    "princegeorgescounty-md-us.zip",     # PG County TheBus — 615 stops (Bowie/Largo/Upper Marlboro)
-    "mdotmta_gtfs_localbus.zip",         # MTA Maryland local bus (regional coverage)
-    "mdotmta_gtfs_commuterbus.zip",
-    "mdotmta_gtfs_lightrail.zip",
-    "mdotmta_gtfs_marc.zip",
-    "mdotmta_gtfs_metro.zip",
+    "aac_gtfs.zip",                      # Anne Arundel County buses (Annapolis/Crofton/Edgewater)
+    "princegeorgescounty-md-us.zip",     # PG County TheBus (Bowie/Largo/Upper Marlboro)
+    "mdotmta_gtfs_localbus.zip",         # MTA Maryland local bus (regional — clipped to corridor)
+    "mdotmta_gtfs_commuterbus.zip",      # MTA commuter express
+    "mdotmta_gtfs_lightrail.zip",        # MTA Light Rail
+    "mdotmta_gtfs_marc.zip",             # MARC commuter rail (Penn/Camden lines)
+    # mdotmta_gtfs_metro.zip excluded — Metro Green/Orange lines don't reach the study area
+    # (0 trips survive bbox+window filter). Confirmed by clip_gtfs.py.
 ]
 
 # === Study Area Bounding Boxes ===
@@ -141,6 +142,7 @@ SCENARIOS = {
         "osm_pbf": OSM_PBF_STUDY,
         "gtfs_dir": GTFS_BASELINE_DIR,
         "include_bike": True,
+        "bike_max_lts": 3,  # No protected lanes — cyclists avoid arterials (LTS 4)
     },
     "policy_a": {
         "label": "Policy A: 5-Minute Bus Frequency",
@@ -148,13 +150,18 @@ SCENARIOS = {
         "osm_pbf": OSM_PBF_STUDY,
         "gtfs_dir": GTFS_DOUBLED_DIR,
         "include_bike": True,
+        "bike_max_lts": 3,  # No bike infrastructure change
     },
     "policy_b": {
         "label": "Policy B: Protected Bike Lanes",
-        "description": "Protected bike lanes on arterial roads (LTS reduced to 2)",
+        "description": "Protected bike lanes on arterial roads — cyclists can use arterials directly",
         "osm_pbf": OSM_PBF_BIKE,
         "gtfs_dir": GTFS_BASELINE_DIR,
         "include_bike": True,
+        "bike_max_lts": 4,  # Protected lanes make arterials accessible — LTS cap raised to 4.
+                            # R5 does not reliably use cycleway=track to lower LTS on parent ways;
+                            # instead the cap directly models "these roads are now safe to use."
+                            # The OSM modification (cycleway=track) is kept for completeness.
     },
     "policy_ab": {
         "label": "Both Policies",
@@ -162,6 +169,7 @@ SCENARIOS = {
         "osm_pbf": OSM_PBF_BIKE,
         "gtfs_dir": GTFS_DOUBLED_DIR,
         "include_bike": True,
+        "bike_max_lts": 4,  # Same as Policy B — arterials accessible
     },
 }
 
@@ -190,8 +198,12 @@ MODE_CHOICE = {
 # Baseline uses LTS 3 so that cycling is physically possible on the existing network.
 # Policy B OSM file sets arterials to LTS 2, meaning those roads become "preferred"
 # routes and bike times drop significantly on the improved network.
-BIKE_MAX_LTS_BASELINE = 3
-BIKE_MAX_LTS_POLICY = 2  # after protected lanes added in Policy B OSM
+BIKE_MAX_LTS_BASELINE = 3  # LTS 3 = confident cyclist on secondary roads.
+                           # Arterials (LTS 4) are excluded in baseline → circuitous detours.
+                           # Policy B tags arterials as cycleway=track → r5py computes LTS 1-2
+                           # → they become included at max_lts=3 → direct routes available.
+                           # Both scenarios use this same cap; the OSM change drives the shift.
+                           # BIKE_MAX_LTS_POLICY was removed — it was defined but never used.
 
 # === Visualization Colors (used in export metadata) ===
 MODE_COLORS = {

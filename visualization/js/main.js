@@ -177,17 +177,28 @@ async function init() {
                 });
                 // Dim roads to gray so agents stand out
                 roadNet.resetColors();
-                // Show GTFS route shapes only in transit x-ray
-                if (mode === 'TRANSIT') {
-                    transitLayer.show();
-                } else {
-                    transitLayer.hide();
-                }
+                // Transit route overlay stays under manual debug toggle — not auto-shown here
             }
         });
     });
 
-    // ── Fullscreen ──────────────────────────────────────────────────────────
+    // ── Fullscreen + debug transit toggle ──────────────────────────────────
+
+    let transitVisible = false;
+    const transitToggleBtn = document.getElementById('transit-routes-toggle');
+
+    function setTransitVisible(v) {
+        transitVisible = v;
+        if (v) { transitLayer.show(); } else { transitLayer.hide(); }
+        if (transitToggleBtn) {
+            transitToggleBtn.classList.toggle('active', v);
+            transitToggleBtn.textContent = v ? 'Routes ✓' : 'Routes';
+        }
+    }
+
+    if (transitToggleBtn) {
+        transitToggleBtn.addEventListener('click', () => setTransitVisible(!transitVisible));
+    }
 
     document.addEventListener('keydown', (e) => {
         if (e.code === 'KeyF') {
@@ -196,6 +207,9 @@ async function init() {
             } else {
                 document.exitFullscreen();
             }
+        }
+        if (e.code === 'KeyT') {
+            setTransitVisible(!transitVisible);
         }
     });
 

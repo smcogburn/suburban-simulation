@@ -6,7 +6,8 @@
       "Bash(python -m analysis.scenario_builder)",
       "Bash(python -m analysis.run_pipeline --scenario baseline)",
       "Bash(python -c \":*)",
-      "Bash(grep -v \"^\\\\s*$\")"
+      "Bash(grep -v \"^\\\\s*$\")",
+      "Bash(python -m analysis.clip_gtfs)"
     ]
   }
 }

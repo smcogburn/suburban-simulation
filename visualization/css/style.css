@@ -222,6 +222,34 @@ canvas {
     z-index: 10;
 }
 
+/* === Debug: Transit Routes Toggle === */
+#transit-routes-toggle {
+    position: fixed;
+    bottom: 108px;
+    left: 24px;
+    background: rgba(10, 10, 20, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #555;
+    font-size: 11px;
+    padding: 4px 10px;
+    border-radius: 6px;
+    cursor: pointer;
+    z-index: 10;
+    letter-spacing: 0.5px;
+    transition: all 0.15s;
+}
+
+#transit-routes-toggle:hover {
+    color: #888;
+    border-color: rgba(255, 255, 255, 0.2);
+}
+
+#transit-routes-toggle.active {
+    color: #4488ff;
+    border-color: rgba(68, 136, 255, 0.5);
+    background: rgba(68, 136, 255, 0.1);
+}
+
 /* === Area Labels === */
 #labels-container {
     position: fixed;

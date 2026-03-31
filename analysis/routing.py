@@ -28,7 +28,7 @@ from analysis.config import (
     GTFS_FEEDS,
     MODE_CHOICE,
     SCENARIOS,
-    BIKE_MAX_LTS_BASELINE,
+    BIKE_MAX_LTS_BASELINE,  # default fallback only — scenarios override via bike_max_lts key
 )
 
 
@@ -171,14 +171,12 @@ def run_scenario_fast(
     # --- Optionally compute BICYCLE travel times ---
     bike_times = None
     if scenario["include_bike"]:
-        # max_bicycle_traffic_stress=3 allows routing on LTS ≤ 3 roads (unprotected
-        # arterials that real cyclists use). Policy B OSM tags protected lanes as LTS 2,
-        # so those routes become faster/preferred automatically on the improved network.
-        print("  Computing BICYCLE travel times (max LTS 3)...")
+        bike_lts = scenario.get("bike_max_lts", BIKE_MAX_LTS_BASELINE)
+        print(f"  Computing BICYCLE travel times (max LTS {bike_lts})...")
         bike_times = compute_travel_time_matrix(
             network, origins, destinations, departure,
             modes=[r5py.TransportMode.BICYCLE],
-            max_bicycle_traffic_stress=BIKE_MAX_LTS_BASELINE,
+            max_bicycle_traffic_stress=bike_lts,
         )
         bike_times = bike_times.rename(columns={"travel_time": "bike_time"})
         bike_times["bike_minutes"] = pd.to_numeric(bike_times["bike_time"], errors="coerce")
@@ -413,11 +411,12 @@ def run_scenario_detailed(
     # Bike itineraries (if applicable)
     bike_itin = None
     if scenario["include_bike"]:
-        print("    Bicycle itineraries (max LTS 3)...")
+        bike_lts = scenario.get("bike_max_lts", BIKE_MAX_LTS_BASELINE)
+        print(f"    Bicycle itineraries (max LTS {bike_lts})...")
         bike_itin = compute_detailed_itineraries(
             network, origins, destinations, departure,
             modes=[r5py.TransportMode.BICYCLE],
-            max_bicycle_traffic_stress=BIKE_MAX_LTS_BASELINE,
+            max_bicycle_traffic_stress=bike_lts,
         )
 
     return {
