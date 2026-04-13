@@ -6,45 +6,55 @@
  * the next shot's startEye (no crossfade). Activates after IDLE_TIMEOUT ms
  * of no user input; any input instantly returns to orbit mode.
  *
- * Tune shot coordinates after VIZ_BBOX expansion to the full corridor.
- * Scene space: CENTER = downtown Annapolis (0,0,0), SCALE = 100000.
- * x = east, z = south (positive z faces away from camera looking north).
+ * Scene space: CENTER = (-76.66, 38.985), SCALE = 100000.
+ * x = east, z = south (north is negative z).
+ *
+ * Named area world positions (x, z):
+ *   Landover:    (-18389, 5040)   — far west, south
+ *   Bowie:        (-5851, 4030)   — west, south
+ *   Crofton:      (-2137, -1680)  — central
+ *   Crownsville:  ( 6536, -5400)  — east, north
+ *   Edgewater:    ( 7888,  4800)  — east, south
+ *   Annapolis:    (13040,   660)  — far east, center
+ *   Severna Park: ( 8922, -8540)  — east, far north
+ *
+ * All shots use linear interpolation (constant velocity — no ease in/out).
  */
 
 const IDLE_TIMEOUT = 8000; // ms before cinematic activates
 
-// Each shot: smooth pan from start to end over `duration` ms, then hard cut.
-// startTarget / endTarget: where the camera looks during the pan.
+// Each shot: linear pan from start to end over `duration` ms, then hard cut.
+// Camera moves at constant velocity — no acceleration or deceleration.
 const SHOTS = [
-    // 1. Street-level east-bound pan — like flying into downtown along the main artery
+    // 1. Grand corridor sweep — west (Landover) to east (Annapolis) at elevation
     {
-        startEye:    [-2000, 150, -100],  startTarget: [-1500,  0, -100],
-        endEye:      [ 1200, 150, -100],  endTarget:   [ 1700,  0, -100],
-        duration: 12000,
+        startEye:    [-17000, 12000, 10000], startTarget: [-14000, 0, 4000],
+        endEye:      [ 12000, 12000, 10000], endTarget:   [ 11000, 0, 1000],
+        duration: 50000,
     },
-    // 2. God's-eye overhead drift — slowly across the whole scene
+    // 2. Low Annapolis approach — gliding north from Edgewater into the peninsula
     {
-        startEye:    [ -600, 5000, -400],  startTarget: [ -600, 0, -400],
-        endEye:      [  800, 5000,  300],  endTarget:   [  800, 0,  300],
-        duration: 10000,
+        startEye:    [ 7000, 1200, 6500],  startTarget: [10000, 0,  600],
+        endEye:      [11500,  700, 2500],  endTarget:   [13000, 0,    0],
+        duration: 30000,
     },
-    // 3. Harbor approach from the south — Eastport/Spa Creek looking north toward downtown
+    // 3. Severna Park ridge — looking south over the northern corridor
     {
-        startEye:    [ 600,  700, 3200],  startTarget: [0, 0,    0],
-        endEye:      [ 300,  400, 1600],  endTarget:   [0, 0,    0],
-        duration: 10000,
+        startEye:    [ 9500, 6000, -9500], startTarget: [ 8500, 0, -5500],
+        endEye:      [ 5500, 6000, -7500], endTarget:   [ 5000, 0, -4000],
+        duration: 36000,
     },
-    // 4. Low sweeping arc around State Circle — agents stream in every direction
+    // 4. Crofton to Crownsville — medium-altitude eastward pan through the central corridor
     {
-        startEye:    [-1200, 280, 1200],  startTarget: [0, 0, 0],
-        endEye:      [ 1400, 280,  800],  endTarget:   [0, 0, 0],
-        duration: 10000,
+        startEye:    [-3000, 5000, 2000],  startTarget: [  500, 0, -1500],
+        endEye:      [ 7000, 5000, 1000],  endTarget:   [ 8500, 0, -2500],
+        duration: 36000,
     },
-    // 5. Elevated Naval Academy view — looking west over the waterfront
+    // 5. Western suburbs — Landover to Bowie steady glide eastward
     {
-        startEye:    [2200, 1400,  400],  startTarget: [200,  0,    0],
-        endEye:      [1000, 1000, -800],  endTarget:   [  0,  0, -300],
-        duration: 10000,
+        startEye:    [-18000, 5500, 7000], startTarget: [-15000, 0, 4500],
+        endEye:      [ -5000, 5500, 6000], endTarget:   [ -5000, 0, 3500],
+        duration: 36000,
     },
 ];
 
@@ -70,12 +80,24 @@ export class CinematicCamera {
         this._fromEye      = [0, 2800, 1800];
         this._fromTarget   = [0, 0, 0];
 
-        const reset = () => this._resetIdle();
-        window.addEventListener('mousemove',  reset);
-        window.addEventListener('mousedown',  reset);
-        window.addEventListener('wheel',      reset);
-        window.addEventListener('touchstart', reset);
-        window.addEventListener('keydown',    reset);
+        // Only exit cinematic on genuine navigation gestures on the 3D canvas:
+        // drag (pointerdown + move) or scroll/pinch (wheel). Plain mouse moves
+        // and UI button clicks are ignored so the mode share panel stays usable.
+        const canvas = controls.domElement;
+        let _pointerDown = false;
+
+        canvas.addEventListener('pointerdown', () => { _pointerDown = true; });
+        window.addEventListener('pointerup',   () => { _pointerDown = false; });
+        canvas.addEventListener('pointermove', () => {
+            if (_pointerDown) this._resetIdle();
+        });
+        canvas.addEventListener('wheel', () => this._resetIdle(), { passive: true });
+
+        // Touch pinch/drag on canvas
+        canvas.addEventListener('touchstart', () => { _pointerDown = true; }, { passive: true });
+        canvas.addEventListener('touchmove',  () => {
+            if (_pointerDown) this._resetIdle();
+        }, { passive: true });
 
         this._startIdleTimer();
     }
@@ -91,7 +113,7 @@ export class CinematicCamera {
         this._activating   = true;
         this._active       = true;
         this._glideElapsed = 0;
-        this._shotIdx      = 0;
+        this._shotIdx      = Math.floor(Math.random() * SHOTS.length);
         this._elapsed      = 0;
         this.controls.enabled = false;
     }
@@ -116,7 +138,7 @@ export class CinematicCamera {
             const GLIDE_MS = 3000;
             this._glideElapsed += ms;
             const t = easeInOut(Math.min(this._glideElapsed / GLIDE_MS, 1));
-            const shot = SHOTS[0];
+            const shot = SHOTS[this._shotIdx];
 
             const eyeX = lerp(this._fromEye[0], shot.startEye[0], t);
             const eyeY = lerp(this._fromEye[1], shot.startEye[1], t);
@@ -146,7 +168,7 @@ export class CinematicCamera {
             return; // draw on next frame
         }
 
-        const t    = easeInOut(this._elapsed / shot.duration);
+        const t    = this._elapsed / shot.duration; // linear — constant velocity
         const eyeX = lerp(shot.startEye[0],    shot.endEye[0],    t);
         const eyeY = lerp(shot.startEye[1],    shot.endEye[1],    t);
         const eyeZ = lerp(shot.startEye[2],    shot.endEye[2],    t);

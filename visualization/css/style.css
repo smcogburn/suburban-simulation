@@ -260,16 +260,58 @@ canvas {
 
 .area-label {
     position: absolute;
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    gap: 3px;
     font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 2px;
+    font-weight: 700;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    color: #ffffff;
-    opacity: 0.3;
+    color: #d2e1ff;
+    text-shadow:
+        0 1px 3px rgba(0, 0, 0, 0.95),
+        0 0 10px rgba(0, 0, 0, 0.8);
     white-space: nowrap;
     transform: translate(-50%, -50%);
-    pointer-events: none;
-    display: none;
+    pointer-events: auto;
+    cursor: pointer;
+    user-select: none;
+    opacity: 0.6;
+    transition: opacity 0.15s;
+}
+
+.area-label:hover {
+    opacity: 1;
+}
+
+/* Small dot marker at the projected geo point */
+.area-label::after {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    background: rgba(160, 190, 255, 0.8);
+    box-shadow: 0 0 5px rgba(100, 150, 255, 0.6);
+    flex-shrink: 0;
+}
+
+/* Slightly larger + brighter for major cities */
+.area-label.major {
+    font-size: 11px;
+    color: #e6f0ff;
+    letter-spacing: 2px;
+    opacity: 0.75;
+}
+
+.area-label.major:hover {
+    opacity: 1;
+}
+
+.area-label.major::after {
+    width: 6px;
+    height: 6px;
+    background: rgba(180, 210, 255, 0.9);
 }
 
 /* === Loading State === */

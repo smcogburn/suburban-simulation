@@ -25,14 +25,14 @@ export class SceneManager {
         this.canvas = canvas;
 
         // Renderer
-        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true });
+        this.renderer = new THREE.WebGLRenderer({ canvas, antialias: true, logarithmicDepthBuffer: true });
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
         this.renderer.setSize(window.innerWidth, window.innerHeight);
-        this.renderer.setClearColor(0x0a0a14);
+        this.renderer.setClearColor(0x03040e);
 
         // Scene
         this.scene = new THREE.Scene();
-        this.scene.fog = new THREE.FogExp2(0x0a0a14, 0.00002);
+        this.scene.fog = new THREE.FogExp2(0x03040e, 0.000018);
 
         // Camera
         this.camera = new THREE.PerspectiveCamera(
@@ -54,12 +54,18 @@ export class SceneManager {
         this.controls.target.set(0, 0, 0);
 
         // Lighting
-        const ambient = new THREE.AmbientLight(0x404060, 0.8);
-        this.scene.add(ambient);
+        this.ambientLight = new THREE.AmbientLight(0x1a2540, 0.9);
+        this.scene.add(this.ambientLight);
 
-        const dirLight = new THREE.DirectionalLight(0x8899cc, 0.6);
-        dirLight.position.set(1000, 2000, 500);
-        this.scene.add(dirLight);
+        // Key light — from upper-left, cool blue-white
+        this.dirLight = new THREE.DirectionalLight(0xc8d8f0, 1.2);
+        this.dirLight.position.set(-1500, 2500, -800);
+        this.scene.add(this.dirLight);
+
+        // Fill light — from right/low, warm accent to separate shadow faces
+        this.fillLight = new THREE.DirectionalLight(0x4466aa, 0.35);
+        this.fillLight.position.set(2000, 600, 1200);
+        this.scene.add(this.fillLight);
 
         // Ground plane
         const groundGeo = new THREE.PlaneGeometry(120000, 120000);
@@ -71,6 +77,20 @@ export class SceneManager {
 
         // Resize handling
         window.addEventListener('resize', () => this._onResize());
+    }
+
+    updateDawnLighting(simTime) {
+        const t = Math.min(simTime / 9000, 1); // 0 = 7:00 AM, 1 = 9:30 AM
+
+        // Only the sky/fog shifts — pre-dawn near-black → deep morning blue
+        // Lights stay constant so building colors remain clean throughout
+        const bg = new THREE.Color().lerpColors(
+            new THREE.Color(0x03040e),
+            new THREE.Color(0x0c1428),
+            t
+        );
+        this.renderer.setClearColor(bg);
+        this.scene.fog.color.copy(bg);
     }
 
     _onResize() {

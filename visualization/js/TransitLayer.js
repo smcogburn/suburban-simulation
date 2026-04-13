@@ -1,16 +1,20 @@
 /**
- * TransitLayer — renders GTFS route shapes as glowing lines.
+ * TransitLayer — renders GTFS route shapes as glowing ribbon quads.
  *
  * Visible only during transit x-ray mode. Each route is drawn in its
  * GTFS color (or blue default). Routes are rendered above the road network
  * so they're clearly visible even when roads are dimmed.
+ *
+ * Uses flat ribbon quads (Mesh) instead of LineSegments to avoid 1px WebGL
+ * line aliasing/flickering at camera distance.
  */
 
 import * as THREE from 'three';
 import { project } from './SceneManager.js';
 
 // Elevation above ground — well above roads (max road y=6) so routes are visible
-const TRANSIT_Y = 18;
+const TRANSIT_Y   = 18;
+const HALF_WIDTH  = 8; // world units — routes are prominent feature lines
 
 export class TransitLayer {
     constructor() {
@@ -31,7 +35,6 @@ export class TransitLayer {
     }
 
     _build() {
-        // Each route path is a series of line segments
         let totalPairs = 0;
         for (const route of this._routes) {
             if (route.path && route.path.length >= 2) {
@@ -39,8 +42,10 @@ export class TransitLayer {
             }
         }
 
-        const positions = new Float32Array(totalPairs * 2 * 3);
-        const colors    = new Float32Array(totalPairs * 2 * 3);
+        // 6 vertices per quad (2 triangles, non-indexed)
+        const VERTS_PER_PAIR = 6;
+        const positions = new Float32Array(totalPairs * VERTS_PER_PAIR * 3);
+        const colors    = new Float32Array(totalPairs * VERTS_PER_PAIR * 3);
 
         let vi = 0;
         for (const route of this._routes) {
@@ -56,21 +61,26 @@ export class TransitLayer {
                 const [x0, z0] = project(route.path[i][0],     route.path[i][1]);
                 const [x1, z1] = project(route.path[i + 1][0], route.path[i + 1][1]);
 
-                positions[vi * 3]     = x0;
-                positions[vi * 3 + 1] = TRANSIT_Y;
-                positions[vi * 3 + 2] = z0;
-                colors[vi * 3]     = color.r;
-                colors[vi * 3 + 1] = color.g;
-                colors[vi * 3 + 2] = color.b;
-                vi++;
+                // Perpendicular to segment direction in the XZ plane
+                const dx  = x1 - x0, dz = z1 - z0;
+                const len = Math.sqrt(dx * dx + dz * dz) || 1;
+                const px  = (-dz / len) * HALF_WIDTH;
+                const pz  = ( dx / len) * HALF_WIDTH;
 
-                positions[vi * 3]     = x1;
-                positions[vi * 3 + 1] = TRANSIT_Y;
-                positions[vi * 3 + 2] = z1;
-                colors[vi * 3]     = color.r;
-                colors[vi * 3 + 1] = color.g;
-                colors[vi * 3 + 2] = color.b;
-                vi++;
+                // Four corners of the ribbon quad
+                const A0x = x0 + px, A0z = z0 + pz;
+                const A1x = x0 - px, A1z = z0 - pz;
+                const B0x = x1 + px, B0z = z1 + pz;
+                const B1x = x1 - px, B1z = z1 - pz;
+
+                // Triangle 1: A0, B0, A1
+                positions[vi*3]=A0x; positions[vi*3+1]=TRANSIT_Y; positions[vi*3+2]=A0z; colors[vi*3]=color.r; colors[vi*3+1]=color.g; colors[vi*3+2]=color.b; vi++;
+                positions[vi*3]=B0x; positions[vi*3+1]=TRANSIT_Y; positions[vi*3+2]=B0z; colors[vi*3]=color.r; colors[vi*3+1]=color.g; colors[vi*3+2]=color.b; vi++;
+                positions[vi*3]=A1x; positions[vi*3+1]=TRANSIT_Y; positions[vi*3+2]=A1z; colors[vi*3]=color.r; colors[vi*3+1]=color.g; colors[vi*3+2]=color.b; vi++;
+                // Triangle 2: A1, B0, B1
+                positions[vi*3]=A1x; positions[vi*3+1]=TRANSIT_Y; positions[vi*3+2]=A1z; colors[vi*3]=color.r; colors[vi*3+1]=color.g; colors[vi*3+2]=color.b; vi++;
+                positions[vi*3]=B0x; positions[vi*3+1]=TRANSIT_Y; positions[vi*3+2]=B0z; colors[vi*3]=color.r; colors[vi*3+1]=color.g; colors[vi*3+2]=color.b; vi++;
+                positions[vi*3]=B1x; positions[vi*3+1]=TRANSIT_Y; positions[vi*3+2]=B1z; colors[vi*3]=color.r; colors[vi*3+1]=color.g; colors[vi*3+2]=color.b; vi++;
             }
         }
 
@@ -78,18 +88,19 @@ export class TransitLayer {
         geo.setAttribute('position', new THREE.BufferAttribute(positions, 3));
         geo.setAttribute('color',    new THREE.BufferAttribute(colors, 3));
 
-        const mat = new THREE.LineBasicMaterial({
+        const mat = new THREE.MeshBasicMaterial({
             vertexColors: true,
-            linewidth: 2,        // note: linewidth > 1 only works in some renderers
             transparent: true,
             opacity: 0.9,
+            depthWrite: false,   // overlay — don't compete with road depth values
+            side: THREE.DoubleSide,
         });
 
         if (this._mesh) {
             this._mesh.geometry.dispose();
             this._mesh.material.dispose();
         }
-        this._mesh = new THREE.LineSegments(geo, mat);
+        this._mesh = new THREE.Mesh(geo, mat);
         this._mesh.frustumCulled = false;
         this._mesh.renderOrder = 1; // draw on top of road network
     }

@@ -74,9 +74,31 @@ export class AgentSystem {
     loadTrips(tripsData) {
         const all = tripsData.trips;
         this.trips = all.filter(trip => {
-            // Require at least 3 waypoints — 2-point trips are routing failures
+            // Require at least 5 waypoints — 2-point trips are routing failures
             // (r5py returned a straight origin→destination line with no road geometry)
-            if (!trip.path || trip.path.length < 3) return false;
+            if (!trip.path || trip.path.length < 5) return false;
+
+            // Filter beeline trips: routing failures often produce a path that
+            // follows roads briefly, then has one giant straight-line "jump"
+            // segment across the map before rejoining roads at the destination.
+            // Detect this by finding the max individual segment length and
+            // comparing it to the median segment length. A real road path has
+            // no segment dramatically longer than the others.
+            // Skip this check for TRANSIT: GTFS paths legitimately contain long
+            // inter-stop segments that would be incorrectly flagged as beelines.
+            if (trip.mode !== 'TRANSIT') {
+                const segLens = [];
+                for (let i = 1; i < trip.path.length; i++) {
+                    const ddlng = trip.path[i][0] - trip.path[i-1][0];
+                    const ddlat = trip.path[i][1] - trip.path[i-1][1];
+                    segLens.push(Math.sqrt(ddlng * ddlng + ddlat * ddlat));
+                }
+                const sorted = segLens.slice().sort((a, b) => a - b);
+                const median = sorted[Math.floor(sorted.length / 2)];
+                const maxSeg = sorted[sorted.length - 1];
+                if (median > 0 && maxSeg / median > 20) return false; // giant jump — skip
+            }
+
             let inBox = 0;
             for (const [lng, lat] of trip.path) {
                 if (lng >= VIZ_BBOX.w && lng <= VIZ_BBOX.e &&

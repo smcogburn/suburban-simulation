@@ -7,7 +7,10 @@
       "Bash(python -m analysis.run_pipeline --scenario baseline)",
       "Bash(python -c \":*)",
       "Bash(grep -v \"^\\\\s*$\")",
-      "Bash(python -m analysis.clip_gtfs)"
+      "Bash(python -m analysis.clip_gtfs)",
+      "Read(//c/Users/smcog/AppData/Local/Temp/claude/c--Users-smcog-OneDrive-Desktop-Coding-suburban-simulation/6f642811-c2d0-4a7a-8f60-8e7c5e18fac3/tasks/**)",
+      "Bash(python3 -c \":*)",
+      "WebSearch"
     ]
   }
 }

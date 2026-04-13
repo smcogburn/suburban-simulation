@@ -6,8 +6,8 @@ import * as THREE from 'three';
 import { mergeGeometries } from '../lib/BufferGeometryUtils.js';
 import { project } from './SceneManager.js';
 
-const BUILDING_COLOR    = 0x3d3d5c; // raised from 0x2a2a3e for better contrast
-const BUILDING_EMISSIVE = 0x151528; // faint window-glow
+const BUILDING_COLOR    = 0xC3C9D6 ; // dark navy-slate — complements the cyan roads
+const BUILDING_EMISSIVE = 0x04060c; // barely-there blue, prevents pure black
 
 // Height variation table for untagged buildings (height === 9).
 // Seeded by building coordinates so heights are stable across reloads.

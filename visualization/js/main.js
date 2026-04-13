@@ -110,16 +110,49 @@ async function init() {
 
     const cinematic = new CinematicCamera(scene.controls, scene.camera);
 
-    // ── Neighborhood labels ──────────────────────────────────────────────────
-    // World positions (x, y, z) for each label. Adjust after VIZ_BBOX expansion.
+    // ── Location labels ──────────────────────────────────────────────────────
+    // World coords via project(lng, lat): x=(lng+76.66)*77715, z=-(lat-38.985)*100000
+    // Center of corridor: (-76.66, 38.985) = world (0, 0, 0)
     const LABELS = [
-        { id: 'label-downtown', pos: new THREE.Vector3(0,    200,  -100) },
-        { id: 'label-eastport', pos: new THREE.Vector3(544,  200,   800) },
-        { id: 'label-naval',    pos: new THREE.Vector3(600,  200,  -200) },
-        { id: 'label-spacreek', pos: new THREE.Vector3(300,  200,   900) },
-        { id: 'label-west',     pos: new THREE.Vector3(-900, 200,  -200) },
+        { id: 'label-annapolis',  pos: new THREE.Vector3(13040,  200,   660) },  // 38.9784°N 76.4922°W
+        { id: 'label-bowie',      pos: new THREE.Vector3(-5851,  200,  4030) },  // 38.9447°N 76.7353°W (Town Center)
+        { id: 'label-crofton',    pos: new THREE.Vector3(-2137,  200, -1680) },  // 39.0018°N 76.6875°W
+        { id: 'label-crownsville',pos: new THREE.Vector3( 6536,  200, -5400) },  // 39.0390°N 76.5759°W
+        { id: 'label-edgewater',  pos: new THREE.Vector3( 7888,  200,  4800) },  // 38.9370°N 76.5585°W
+        { id: 'label-landover',   pos: new THREE.Vector3(-18389, 200,  5040) },  // 38.9346°N 76.8966°W
+        { id: 'label-severnapark',pos: new THREE.Vector3( 8922,  200, -8540) },  // 39.0704°N 76.5452°W
     ];
     const labelEls = LABELS.map(l => document.getElementById(l.id));
+
+    // Click a label → animated glide to that location with zoom-in
+    const LABEL_PAN_MS = 1500;
+    const LABEL_EYE_Y  = 4000; // camera height after zoom
+    const LABEL_EYE_DZ = 3000; // camera z-offset behind target
+    function easeInOut(t) { return t < 0.5 ? 2*t*t : -1 + (4 - 2*t)*t; }
+
+    let labelPan = null;
+
+    for (let i = 0; i < LABELS.length; i++) {
+        const worldPos = LABELS[i].pos;
+        labelEls[i].addEventListener('click', () => {
+            labelPan = {
+                fromEye:    scene.camera.position.clone(),
+                fromTarget: scene.controls.target.clone(),
+                toEye:      new THREE.Vector3(worldPos.x, LABEL_EYE_Y, worldPos.z + LABEL_EYE_DZ),
+                toTarget:   new THREE.Vector3(worldPos.x, 0, worldPos.z),
+                elapsed: 0,
+            };
+            scene.controls.enabled = false;
+        });
+    }
+
+    // Let the user take back control mid-flight if they touch the scene
+    canvas.addEventListener('mousedown', () => {
+        if (labelPan) { labelPan = null; scene.controls.enabled = true; }
+    });
+    canvas.addEventListener('wheel', () => {
+        if (labelPan) { labelPan = null; scene.controls.enabled = true; }
+    }, { passive: true });
 
     function updateLabels() {
         const v = new THREE.Vector3();
@@ -131,7 +164,7 @@ async function init() {
             const visible = v.z > -1 && v.z < 1;
             labelEls[i].style.left    = x + 'px';
             labelEls[i].style.top     = y + 'px';
-            labelEls[i].style.display = visible ? 'block' : 'none';
+            labelEls[i].style.display = visible ? 'flex' : 'none';
         }
     }
 
@@ -226,6 +259,7 @@ async function init() {
 
         timeCtrl.tick(now);
         agents.update(timeCtrl.simTime);
+        scene.updateDawnLighting(timeCtrl.simTime);
         cinematic.update(dt);
         updateLabels();
 
@@ -247,6 +281,19 @@ async function init() {
         if (liveEls.TRANSIT) liveEls.TRANSIT.textContent = total > 0 ? `${counts.TRANSIT} now` : '';
         if (liveEls.BICYCLE) liveEls.BICYCLE.textContent = total > 0 ? `${counts.BICYCLE} now` : '';
         if (liveEls.WALK)    liveEls.WALK.textContent    = total > 0 ? `${counts.WALK} now`    : '';
+
+        // Animated glide when a label is clicked
+        if (labelPan) {
+            labelPan.elapsed += dt * 1000;
+            const t = easeInOut(Math.min(labelPan.elapsed / LABEL_PAN_MS, 1));
+            scene.camera.position.lerpVectors(labelPan.fromEye, labelPan.toEye, t);
+            scene.controls.target.lerpVectors(labelPan.fromTarget, labelPan.toTarget, t);
+            scene.camera.lookAt(scene.controls.target);
+            if (labelPan.elapsed >= LABEL_PAN_MS) {
+                scene.controls.enabled = true;
+                labelPan = null;
+            }
+        }
 
         scene.render();
     }
