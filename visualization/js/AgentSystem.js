@@ -130,6 +130,12 @@ export class AgentSystem {
             }
             return { projCoords, cumDist, totalDist: total };
         });
+
+        // Raw path coordinates are no longer needed — projCoords holds the
+        // pre-projected equivalents. Free them to reduce mobile memory pressure.
+        for (const trip of this.trips) {
+            delete trip.path;
+        }
     }
 
     _buildGeometry() {

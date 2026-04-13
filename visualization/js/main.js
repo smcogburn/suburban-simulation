@@ -17,6 +17,7 @@ import {
     loadTrips,
     loadCongestion,
     loadTransitRoutes,
+    releaseCache,
 } from './DataLoader.js';
 import { TransitLayer } from './TransitLayer.js';
 
@@ -52,6 +53,7 @@ async function init() {
     // Buildings (may take a moment to merge geometry)
     const buildingMesh = buildBuildingMesh(buildingsData);
     if (buildingMesh) scene.add(buildingMesh);
+    releaseCache('buildings.json'); // geometry is built; raw JSON no longer needed
 
     // Roads
     const roadNet = new RoadNetwork(roadsData);
@@ -70,6 +72,7 @@ async function init() {
 
     loadingEl.textContent = 'Loading trips (baseline)...';
     let currentCongestion = null;
+    let currentScenarioName = null;
 
     async function loadScenario(name) {
         loadingEl.style.display = 'flex';
@@ -81,11 +84,19 @@ async function init() {
                 loadCongestion(name).catch(() => null),
             ]);
 
+            // Release previous scenario from cache now that new data is loaded
+            if (currentScenarioName && currentScenarioName !== name) {
+                releaseCache(`trips_${currentScenarioName}.json`);
+                releaseCache(`congestion_${currentScenarioName}.json`);
+            }
+
             if (tripsData) {
                 agents.loadTrips(tripsData);
+                releaseCache(`trips_${name}.json`); // path data now in AgentSystem
             }
 
             currentCongestion = congData;
+            currentScenarioName = name;
 
             // Apply congestion for current time window
             if (congData) {

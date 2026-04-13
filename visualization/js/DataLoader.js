@@ -15,6 +15,10 @@ async function loadJSON(filename) {
     return data;
 }
 
+export function releaseCache(filename) {
+    delete cache[filename];
+}
+
 export async function loadBuildings() {
     return loadJSON('buildings.json');
 }
